@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Configuration - POWERGRID AI Helpdesk</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        :root {
+            --primary: #1e40af;
+            --primary-dark: #1e3a8a;
+            --secondary: #0891b2;
+            --success: #059669;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --text-dark: #0f172a;
+            --text-medium: #475569;
+            --text-light: #94a3b8;
+            --border: #e2e8f0;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --shadow: rgba(15, 23, 42, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 50%, #f8fafc 100%);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-y: auto;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-white);
+            border-bottom: 2px solid var(--border);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+        }
+
+        .logo-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .logo-text p {
+            font-size: 0.875rem;
+            color: var(--text-medium);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.625rem 1.25rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-outline {
+            background: white;
+            border: 1px solid var(--border);
+            color: var(--text-dark);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: var(--text-medium);
+            font-size: 1rem;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--text-medium);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tab:hover {
+            color: var(--primary);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Content Sections */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-help {
+            font-size: 0.8125rem;
+            color: var(--text-medium);
+            margin-top: 0.25rem;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 0.9375rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        /* Switch Toggle */
+        .switch-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .switch-group:last-child {
+            border-bottom: none;
+        }
+
+        .switch-label {
+            flex: 1;
+        }
+
+        .switch-label strong {
+            display: block;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .switch-label span {
+            font-size: 0.875rem;
+            color: var(--text-medium);
+        }
+
+        .switch {
+            position: relative;
+            width: 48px;
+            height: 24px;
+            background: #cbd5e1;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .switch.active {
+            background: var(--primary);
+        }
+
+        .switch-handle {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        .switch.active .switch-handle {
+            transform: translateX(24px);
+        }
+
+        /* Rule List */
+        .rule-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .rule-item {
+            padding: 1rem;
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .rule-info {
+            flex: 1;
+        }
+
+        .rule-name {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .rule-description {
+            font-size: 0.875rem;
+            color: var(--text-medium);
+        }
+
+        .rule-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: white;
+            color: var(--text-medium);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-icon:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-icon.danger:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.8125rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: var(--success);
+        }
+
+        .badge-warning {
+            background: #fed7aa;
+            color: var(--warning);
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: var(--danger);
+        }
+
+        .badge-info {
+            background: #dbeafe;
+            color: var(--primary);
+        }
+
+        /* Alert */
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: start;
+            gap: 0.75rem;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            border: 1px solid #a7f3d0;
+            color: var(--success);
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+            color: var(--warning);
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            border: 1px solid #bfdbfe;
+            color: var(--primary);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-box {
+            padding: 1.25rem;
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-medium);
+            font-weight: 500;
+        }
+
+        /* Save Button */
+        .btn-save {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(30, 64, 175, 0.3);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+
+            .header {
+                padding: 1rem;
+            }
+
+            .tabs {
+                flex-wrap: nowrap;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Success Message */
+        .success-message {
+            display: none;
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: var(--success);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: slideIn 0.3s ease;
+            z-index: 1000;
+        }
+
+        .success-message.show {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Success Message Toast -->
+    <div class="success-message" id="successMessage">
+        <i data-lucide="check-circle" style="width: 20px; height: 20px;"></i>
+        <span id="successText">Configuration saved successfully!</span>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    <i data-lucide="settings" style="width: 28px; height: 28px; color: white;"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>System Configuration</h1>
+                    <p>POWERGRID AI Helpdesk Admin Panel</p>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <button class="btn btn-outline" onclick="window.location.href='index.html'">
+                    <i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i>
+                    Back to Dashboard
+                </button>
+                <div class="user-avatar" id="userAvatar" title="User"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h2 class="page-title">System Configuration</h2>
+            <p class="page-subtitle">Configure and manage your IT helpdesk system settings</p>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('general')">
+                <i data-lucide="settings" style="width: 18px; height: 18px;"></i>
+                General
+            </button>
+            <button class="tab" onclick="switchTab('routing')">
+                <i data-lucide="git-branch" style="width: 18px; height: 18px;"></i>
+                Routing Rules
+            </button>
+            <button class="tab" onclick="switchTab('sla')">
+                <i data-lucide="clock" style="width: 18px; height: 18px;"></i>
+                SLA Settings
+            </button>
+            <button class="tab" onclick="switchTab('notifications')">
+                <i data-lucide="bell" style="width: 18px; height: 18px;"></i>
+                Notifications
+            </button>
+            <button class="tab" onclick="switchTab('ai')">
+                <i data-lucide="brain" style="width: 18px; height: 18px;"></i>
+                AI Settings
+            </button>
+            <button class="tab" onclick="switchTab('categories')">
+                <i data-lucide="folder" style="width: 18px; height: 18px;"></i>
+                Categories
+            </button>
+        </div>
+
+        <!-- General Settings Section -->
+        <div id="general" class="section active">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i data-lucide="settings" style="width: 20px; height: 20px;"></i>
+                        General System Settings
+                    </h3>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">System Name</label>
+                    <input type="text" class="form-input" value="POWERGRID IT Helpdesk" placeholder="Enter system name">
+                    <p class="form-help">Display name shown throughout the application</p>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Default Timezone</label>
+                        <select class="form-select">
+                            <option>Asia/Kolkata (IST)</option>
+                            <option>Asia/Dubai (GST)</option>
+                            <option>UTC</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Date Format</label>
+                        <select class="form-select">
+                            <option>DD/MM/YYYY</option>
+                            <option>MM/DD/YYYY</option>
+                            <option>YYYY-MM-DD</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Support Email</label>
+                    <input type="email" class="form-input" value="support@powergrid.in" placeholder="support@example.com">
+                    <p class="form-help">Email address for system notifications and support</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Working Hours</label>
+                    <div class="form-row">
+                        <input type="time" class="form-input" value="09:00">
+                        <input type="time" class="form-input" value="18:00">
+                    </div>
+                    <p class="form-help">Business hours for SLA calculations</p>
+                </div>
+
+                <div class="switch-group">
+                    <div class="switch-label">
+                        <strong>Maintenance Mode</strong>
+                        <span>Disable access for maintenance and upgrades</span>
+                    </div>
+                    <div class="switch" onclick="toggleSwitch(this)">
+                        <div class="switch-handle"></div>
+                    </div>
+                </div>
+
+                <div class="switch-group">
+                    <div class="switch-label">
+                        <strong>Allow User Registration</strong>
+                        <span>Enable new users to create accounts</span>
+                    </div>
+                    <div class="switch active" onclick="toggleSwitch(this)">
+                        <div class="switch-handle"></div>
+                    </div>
+                </div>
+
+                <div class="switch-group">
+                    <div class="switch-label">
+                        <strong>Email Ticket Creation</strong>
+                        <span>Allow users to create tickets via email</span>
+                    </div>
+                    <div class="switch active" onclick="toggleSwitch(this)">
+                        <div class="switch-handle"></div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <button class="btn btn-save" onclick="saveConfiguration('general')">
+                        <i data-lucide="save" style="width: 18px; height: 18px;"></i>
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Routing Rules Section -->
+        <div id="routing" class="section">
+            <div class="alert alert-info">
+                <i data-lucide="info" style="width: 20px; height: 20px;"></i>
+                <div>
+                    <strong>AI-Powered Routing</strong>
+                    <p style="margin-top: 0.25rem; font-size: 0.875rem;">Configure rules for automatic ticket assignment based on categories, keywords, and priority levels.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i data-lucide="git-branch" style="width: 20px; height: 20px;"></i>
+                        Automatic Routing Rules
+                    </h3>
+                    <button class="btn btn-outline" onclick="addRoutingRule()">
+                        <i data-lucide="plus" style="width: 18px; height: 18px;"></i>
+                        Add Rule
+                    </button>
+                </div>
+
+                <div class="rule-list">
+                    <div class="rule-item">
+                        <div class="rule-info">
+                            <div class="rule-name">Hardware Issues → IT Support Team</div>
+                            <div class="rule-description">
+                                Category: Hardware | Priority: All | Assign to: IT Support Team
+                            </div>
+                        </div>
+                        <div class="rule-actions">
+                            <button class="btn-icon" title="Edit">
+                                <i data-lucide="edit-2" style="width: 18px; height: 18px;"></i>
+                            </button>
+                            <button class="btn-icon danger" title="Delete">
+                                <i data-lucide="trash-2" style="width: 18px; height: 18px;"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="rule-item">
+                        <div class="rule-info">
+                            <div class="rule-name">Network Problems → Network Engineering</div>
+                            <div class="rule-description">
+                                Category: Network | Priority: High, Critical | Assign to: Network Team
+                            </div>
+                        </div>
+                        <div class="rule-actions">
+                            <button class="btn-icon" title="Edit">
+                                <i data-lucide="edit-2" style="width: 18px; height: 18px;"></i>
+                            </button>
+                            <button class="btn-icon danger" title="Delete">
+                                <i data-lucide="trash-2" style="width: 18px; height: 18px;"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="rule-item">
+                        <div class="rule-info">
+                            <div class="rule-name">Access & Permissions → Security Team</div>
+                            <div class="rule-description">
+                                Category: Access | Keywords: password, login, permission | Assign to: Security Team
+                            </div>
+                        </div>
+                        <div class="rule-actions">
+                            <button class="btn-icon" title="Edit">
+                                <i data-lucide="edit-2" style="width: 18px; height: 18px;"></i>
+                            </button>
+                            <button class="btn-icon danger" title="Delete">
+                                <i data-lucide="trash-2" style="width: 18px; height: 18px;"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i data-lucide="users" style="width: 20px; height: 20px;"></i>
+                        Default Assignments
+                    </h3>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Unassigned Ticket Handler</label>
+                        <select class="form-select">
+                            <option>IT Support Team Lead</option>
+                            <option>Helpdesk Manager</option>
+                            <option>Auto-distribute</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Load Balancing</label>
+                        <select class="form-select">
+                            <option>Round Robin</option>
+                            <option>Least Busy</option>
+                            <option>Skills-based</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1.5rem;">
+                    <button class="btn btn-save" onclick="saveConfiguration('routing')">
+                        <i data-lucide="save" style="width: 18px; height: 18px;"></i>
+                        Save Routing Rules
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLA Settings Section -->
+        <div id="sla" class="section">
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value">94.8%</div>
+                    <div class="stat-label">Current SLA Compliance</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">4.2h</div>
+                    <div class="stat-label">Avg. Resolution Time</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">127</div>
+                    <div class="stat-label">Within SLA</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">5</div>
+                    <div class="stat-label">SLA Breached</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i data-lucide="clock" style="width: 20px; height: 20px;"></i>
+                        SLA Targets by Priority
+                    </h3>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Critical Priority</label>
+                    <div class="form-row">
+                        <div>
+                            <input type="number" class="form-input" value="2" placeholder="Hours">
+                            <p class="form-help">Response time (hours)</p>
+                        </div>
+                        <div>
+                            <input type="number" class="form-input" value="8" placeholder="Hours">
+                            <p class="form-help">Resolution time (hours)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">High Priority</label>
+                    <div class="form-row">
+                        <div>
+                            <input type="number" class="form-input" value="4" placeholder="Hours">
+                            <p class="form-help">Response time (hours)</p>
+                        </div>
+                        <div>
+                            <input type="number" class="form-input" value="24" placeholder="Hours">
+                            <p class="form-help">Resolution time (hours)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Medium Priority</label>
+                    <div class="form-row">
+                        <div>
+                            <input type="number" class="form-input" value="8" placeholder="Hours">
+                            <p class="form-help">Response time (hours)</p>
+                        </div>
+                        <div>
+                            <input type="number" class="form-input" value="48" placeholder="Hours">
+                            <p class="form-help">Resolution time (hours)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Low Priority</label>
+                    <div class="form-row">
+                        <div>
+                            <input type="number" class="form-input" value="24" placeholder="Hours">
+                            <p class="form-help">Response time (hours)</p>
+                        </div>
+                        <div>
+                            <input type="number" class="form-input" value="120" placeholder="Hours">
+                            <p class="form-help">Resolution time (hours)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="switch-group">
+                    <div class="switch-label">
+                        <strong>Pause SLA During Non-Working Hours</strong>
+                        <span>SLA timer pauses outside business hours</span>
+                    </div>
+                    <div class="switch active" onclick="toggleSwitch(this)">
+                        <div class="switch-handle"></div>
+                    </div>
+                </div>
+
+                <div class="switch-group">
+                    <div class="switch-label">
+                        <strong>SLA Breach Alerts</strong>
+                        <span>Send notifications when tickets approach SLA deadline</span>
+                    </div>
+                    <div class="switch active" onclick="toggleSwitch(this)">
+                        <div class="switch-handle"></div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label class="form-label">Alert Before Breach (minutes)</label>
+                    <input type="number" class="form-input" value="30" placeholder="30">
+                    <p class="form-help">Send alert this many minutes before SLA breach</p>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <button class="btn btn-save" onclick="saveConfiguration('sla')">
+                        <i data-lucide="save" style="width: 18px; height: 18px;"></i>
+                        Save SLA Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Section -->
+        <div id="notifications" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i data-lucide="mail" style="width: 20px; height: 20px;"></i>
+                        Email Notifications
+                    </h3>
+                </div>
+
+                <div class="switch-group">
+                    <div class="switch-label">
+                        <strong>Ticket Created</strong>
+                        <span>Send email when a new ticket is created</span>
+                    </div>
+                    <div class="switch active" onclick="toggleSwitch(this)">
+                        <div class="switch-handle"></div>
+                    </div>
+                </div>
+
+                <div class="switch-group">
+                    <div class="switch-label">
+                        <strong>Ticket Assigned</strong>
+                        <span>Notify engineer when ticket is assigned to them</span>
+                    </div>
+                    <div class="switch active" onclick="toggleSwitch(this)">
+                        <div class="switch-handle"></div>
+                    </div>
+                </div>
+
+                <div class="switch-group">
+                    <div class="switch-label">
+                        <strong>Status Updated</strong>
+                        <span>Notify user when ticket status changes</span>
+                    </div>
+                    <div class="switch active" onclick="toggleSwitch(this)">
+                        <div class="switch-handle"></div>
+                    </div>
+                </div>
+
+                <div class="switch-group">
+                    <div class="switch-label">
+                        <strong>Ticket Resolved</strong>
+                        <span>Send email when ticket is marked as resolved</span>
+                    </div>
+                    <div class="switch active" onclick="toggleSwitch(this)">
+                        <div class="switch-handle"></div>
+                    </div>
+                </div>
+
+                <div class="switch-group">
+                    <div class="switch-label">
+                        <strong>SLA Breach Warning</strong>
+                        <span>Alert when ticket is approaching SLA deadline</span>
+                    </div>
+                    <div class="switch active" onclick="toggleSwitch(this)">
+                        <div class="switch-handle"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i data-lucide="smartphone" style="width: 20px; height: 20px;"></i>
+                        SMS Notifications
+                    </h3>
+                </div>
+
+                <div class="switch-group">
+                    <div class="switch-label">
+                        <strong>Enable SMS Notifications</strong>
+                        <span>Send SMS for critical alerts</span>
+                    </div>
+                    <div class="switch active" onclick="toggleSwitch(this)">
+                        <div class="switch-handle"></div>
+                    </div>
+                </div>
+
+                <div class="switch-group">
+                    <div class="switch-label">
+                        <strong>Critical Tickets Only</strong>
+                        <span>Send SMS only for critical priority tickets</span>
+                    </div>
+                    <div class="switch active" onclick="toggleSwitch(this)">
+                        <div class="switch-handle"></div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label class="form-label">SMS Gateway API Key</label>
+                    <input type="password" class="form-input" value="••••••••••••••••" placeholder="Enter API key">
+                    <p class="form-help">API key for SMS service provider</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i data-lucide="message-square" style="width: 20px; height: 20px;"></i>
+                        In-App Notifications
+                    </h3>
+                </div>
+
+                <div class="switch-group">
+                    <div class="switch-label">
+                        <strong>Browser Push Notifications</strong>
+                        <span>Show desktop notifications in browser</span>
+                    </div>
+                    <div class="switch active" onclick="toggleSwitch(this)">
+                        <div class="switch-handle"></div>
+                    </div>
+                </div>
+
+                <div class="switch-group">
+                    <div class="switch-label">
+                        <strong>Sound Alerts</strong>
+                        <span>Play sound for new notifications</span>
+                    </div>
+                    <div class="switch active" onclick="toggleSwitch(this)">
+                        <div class="switch-handle"></div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <button class="btn btn-save" onclick="saveConfiguration('notifications')">
+                        <i data-lucide="save" style="width: 18px; height: 18px;"></i>
+                        Save Notification Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Settings Section -->
+        <div id="ai" class="section">
+            <div class="alert alert-warning">
+                <i data-lucide="alert-triangle" style="width: 20px; height: 20px;"></i>
+                <div>
+                    <strong>AI Features (Beta)</strong>
+                    <p style="margin-top: 0.25rem; font-size: 0.875rem;">Some AI features are in beta. Monitor their performance and provide feedback.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i data-lucide="brain" style="width: 20px; height: 20px;"></i>
+                        AI Capabilities
+                    </h3>
+                </div>
+
+                <div class="switch-group">
+                    <div class="switch-label">
+                        <strong>AI Chatbot</strong>
+                        <span>Enable AI-powered chatbot for instant support</span>
+                    </div>
+                    <div class="switch active" onclick="toggleSwitch(this)">
+                        <div class="switch-handle"></div>
+                    </div>
+                </div>
+
+                <div class="switch-group">
+                    <div class="switch-label">
+                        <strong>Auto-Categorization</strong>
+                        <span>Automatically categorize tickets using AI</span>
+                    </div>
+                    <div class="switch active" onclick="toggleSwitch(this)">
+                        <div class="switch-handle"></div>
+                    </div>
+                </div>
+
+                <div class="switch-group">
+                    <div class="switch-label">
+                        <strong>Smart Suggestions</strong>
+                        <span>Show AI-powered solution suggestions to users</span>
+                    </div>
+                    <div class="switch active" onclick="toggleSwitch(this)">
+                        <div class="switch-handle"></div>
+                    </div>
+                </div>
+
+                <div class="switch-group">
+                    <div class="switch-label">
+                        <strong>Priority Prediction</strong>
+                        <span>AI predicts ticket priority based on content</span>
+                    </div>
+                    <div class="switch active" onclick="toggleSwitch(this)">
+                        <div class="switch-handle"></div>
+                    </div>
+                </div>
+
+                <div class="switch-group">
+                    <div class="switch-label">
+                        <strong>Sentiment Analysis</strong>
+                        <span>Detect urgent tickets based on user sentiment</span>
+                    </div>
+                    <div class="switch active" onclick="toggleSwitch(this)">
+                        <div class="switch-handle"></div>
+                    </div>
+                </div>
+
+                <div class="switch-group">
+                    <div class="switch-label">
+                        <strong>Auto-Resolution</strong>
+                        <span>Automatically resolve common issues using AI</span>
+                    </div>
+                    <div class="switch" onclick="toggleSwitch(this)">
+                        <div class="switch-handle"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i data-lucide="settings-2" style="width: 20px; height: 20px;"></i>
+                        AI Model Configuration
+                    </h3>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">AI Model Provider</label>
+                    <select class="form-select">
+                        <option>OpenAI GPT-4</option>
+                        <option selected>Google Gemini</option>
+                        <option>Custom Model</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">API Key</label>
+                    <input type="password" class="form-input" value="••••••••••••••••" placeholder="Enter API key">
+                    <p class="form-help">API key for AI model provider</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Confidence Threshold</label>
+                    <input type="range" class="form-input" min="0" max="100" value="75" oninput="updateRangeValue(this, 'confidence-value')">
+                    <p class="form-help">Minimum confidence: <strong id="confidence-value">75%</strong></p>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <button class="btn btn-save" onclick="saveConfiguration('ai')">
+                        <i data-lucide="save" style="width: 18px; height: 18px;"></i>
+                        Save AI Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories Section -->
+        <div id="categories" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i data-lucide="folder" style="width: 20px; height: 20px;"></i>
+                        Ticket Categories
+                    </h3>
+                    <button class="btn btn-outline" onclick="addCategory()">
+                        <i data-lucide="plus" style="width: 18px; height: 18px;"></i>
+                        Add Category
+                    </button>
+                </div>
+
+                <div class="rule-list">
+                    <div class="rule-item">
+                        <div class="rule-info">
+                            <div class="rule-name">💻 Hardware</div>
+                            <div class="rule-description">Laptops, desktops, printers, and physical equipment issues</div>
+                        </div>
+                        <div class="rule-actions">
+                            <span class="badge badge-info">142 tickets</span>
+                            <button class="btn-icon" title="Edit">
+                                <i data-lucide="edit-2" style="width: 18px; height: 18px;"></i>
+                            </button>
+                            <button class="btn-icon danger" title="Delete">
+                                <i data-lucide="trash-2" style="width: 18px; height: 18px;"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="rule-item">
+                        <div class="rule-info">
+                            <div class="rule-name">📦 Software</div>
+                            <div class="rule-description">Application installations, updates, and software-related problems</div>
+                        </div>
+                        <div class="rule-actions">
+                            <span class="badge badge-info">98 tickets</span>
+                            <button class="btn-icon" title="Edit">
+                                <i data-lucide="edit-2" style="width: 18px; height: 18px;"></i>
+                            </button>
+                            <button class="btn-icon danger" title="Delete">
+                                <i data-lucide="trash-2" style="width: 18px; height: 18px;"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="rule-item">
+                        <div class="rule-info">
+                            <div class="rule-name">🌐 Network</div>
+                            <div class="rule-description">Internet connectivity, WiFi, VPN, and network access issues</div>
+                        </div>
+                        <div class="rule-actions">
+                            <span class="badge badge-info">76 tickets</span>
+                            <button class="btn-icon" title="Edit">
+                                <i data-lucide="edit-2" style="width: 18px; height: 18px;"></i>
+                            </button>
+                            <button class="btn-icon danger" title="Delete">
+                                <i data-lucide="trash-2" style="width: 18px; height: 18px;"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="rule-item">
+                        <div class="rule-info">
+                            <div class="rule-name">🔐 Access & Permissions</div>
+                            <div class="rule-description">Login problems, password resets, and access requests</div>
+                        </div>
+                        <div class="rule-actions">
+                            <span class="badge badge-info">54 tickets</span>
+                            <button class="btn-icon" title="Edit">
+                                <i data-lucide="edit-2" style="width: 18px; height: 18px;"></i>
+                            </button>
+                            <button class="btn-icon danger" title="Delete">
+                                <i data-lucide="trash-2" style="width: 18px; height: 18px;"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="rule-item">
+                        <div class="rule-info">
+                            <div class="rule-name">📧 Email</div>
+                            <div class="rule-description">Email configuration, spam issues, and mailbox problems</div>
+                        </div>
+                        <div class="rule-actions">
+                            <span class="badge badge-info">32 tickets</span>
+                            <button class="btn-icon" title="Edit">
+                                <i data-lucide="edit-2" style="width: 18px; height: 18px;"></i>
+                            </button>
+                            <button class="btn-icon danger" title="Delete">
+                                <i data-lucide="trash-2" style="width: 18px; height: 18px;"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <button class="btn btn-save" onclick="saveConfiguration('categories')">
+                        <i data-lucide="save" style="width: 18px; height: 18px;"></i>
+                        Save Categories
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i data-lucide="flag" style="width: 20px; height: 20px;"></i>
+                        Priority Levels
+                    </h3>
+                </div>
+
+                <div class="rule-list">
+                    <div class="rule-item">
+                        <div class="rule-info">
+                            <div class="rule-name">🔴 Critical</div>
+                            <div class="rule-description">System down, major business impact, immediate attention required</div>
+                        </div>
+                        <div class="rule-actions">
+                            <span class="badge badge-danger">5 active</span>
+                        </div>
+                    </div>
+
+                    <div class="rule-item">
+                        <div class="rule-info">
+                            <div class="rule-name">🟠 High</div>
+                            <div class="rule-description">Significant impact, work is blocked, urgent resolution needed</div>
+                        </div>
+                        <div class="rule-actions">
+                            <span class="badge badge-warning">12 active</span>
+                        </div>
+                    </div>
+
+                    <div class="rule-item">
+                        <div class="rule-info">
+                            <div class="rule-name">🟡 Medium</div>
+                            <div class="rule-description">Moderate impact, work can continue with workaround</div>
+                        </div>
+                        <div class="rule-actions">
+                            <span class="badge badge-info">23 active</span>
+                        </div>
+                    </div>
+
+                    <div class="rule-item">
+                        <div class="rule-info">
+                            <div class="rule-name">🟢 Low</div>
+                            <div class="rule-description">Minor inconvenience, cosmetic issues, feature requests</div>
+                        </div>
+                        <div class="rule-actions">
+                            <span class="badge badge-success">18 active</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Tab Switching
+        function switchTab(tabName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected section
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked tab
+            event.target.closest('.tab').classList.add('active');
+
+            // Reinitialize icons
+            lucide.createIcons();
+        }
+
+        // Toggle Switch
+        function toggleSwitch(element) {
+            element.classList.toggle('active');
+        }
+
+        // Update Range Value
+        function updateRangeValue(range, targetId) {
+            document.getElementById(targetId).textContent = range.value + '%';
+        }
+
+        // Save Configuration
+        function saveConfiguration(section) {
+            // Show success message
+            const successMsg = document.getElementById('successMessage');
+            const successText = document.getElementById('successText');
+            
+            const messages = {
+                'general': 'General settings saved successfully!',
+                'routing': 'Routing rules saved successfully!',
+                'sla': 'SLA settings saved successfully!',
+                'notifications': 'Notification settings saved successfully!',
+                'ai': 'AI settings saved successfully!',
+                'categories': 'Categories saved successfully!'
+            };
+
+            successText.textContent = messages[section] || 'Configuration saved successfully!';
+            successMsg.classList.add('show');
+
+            // Hide after 3 seconds
+            setTimeout(() => {
+                successMsg.classList.remove('show');
+            }, 3000);
+
+            // Here you would normally send data to backend
+            console.log('Saving configuration for:', section);
+        }
+
+        // Add Routing Rule
+        function addRoutingRule() {
+            alert('Add Routing Rule dialog would open here.\n\nThis would include:\n- Condition (Category, Priority, Keywords)\n- Action (Assign to Team/Person)\n- Status');
+        }
+
+        // Add Category
+        function addCategory() {
+            alert('Add Category dialog would open here.\n\nThis would include:\n- Category Name\n- Icon/Emoji\n- Description\n- Default Team Assignment');
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            lucide.createIcons();
+        });
+    </script>
+    <script>
+// Auth check & user data
+const userData = localStorage.getItem('user');
+const token = localStorage.getItem('token');
+if (!token || !userData) {
+  window.location.href = 'login.html';
+} else {
+  const user = JSON.parse(userData);
+  
+  if (user.role !== "Admin" && user.role !== "IT Engineer") {
+    alert("Access Denied! Admin Only.");
+    window.location.href = 'index.html';
+  }
+  
+  const avatar = document.getElementById('userAvatar');
+  if (avatar && user.name) {
+    const parts = user.name.trim().split(' ');
+    let initials = parts[0][0];
+    if (parts.length > 1) initials += parts[1][0];
+    avatar.textContent = initials.toUpperCase();
+    avatar.setAttribute('title', user.name);
+  }
+}
+</script>
+</body>
+</html>

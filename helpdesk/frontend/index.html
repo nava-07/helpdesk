@@ -1,0 +1,2650 @@
+5888888<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POWERGRID AI Helpdesk - Smart IT Ticketing System</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Socket.io -->
+    <script src="http://localhost:5000/socket.io/socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    
+    <style>
+        :root {
+            --primary: #1e40af;
+            --primary-dark: #1e3a8a;
+            --secondary: #0891b2;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --neutral: #64748b;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --text-dark: #0f172a;
+            --text-medium: #475569;
+            --text-light: #94a3b8;
+            --border: #e2e8f0;
+            --shadow: rgba(15, 23, 42, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 50%, #f8fafc 100%);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-y: auto;
+        }
+
+        /* Header Styles */
+        .header {
+            background: var(--bg-white);
+            border-bottom: 2px solid var(--border);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+        }
+
+        .logo-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            letter-spacing: -0.02em;
+        }
+
+        .logo-text p {
+            font-size: 0.875rem;
+            color: var(--text-medium);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.625rem 1.25rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(30, 64, 175, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(30, 64, 175, 0.4);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+
+        /* Sidebar Navigation */
+        .layout {
+            display: flex;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: var(--bg-white);
+            border-right: 1px solid var(--border);
+            padding: 1.5rem 0;
+            min-height: calc(100vh - 82px);
+        }
+
+        .nav-item {
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-medium);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            font-size: 0.9375rem;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-light);
+            color: var(--primary);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(30, 64, 175, 0.1) 0%, transparent 100%);
+            color: var(--primary);
+            border-left: 3px solid var(--primary);
+        }
+
+        .nav-section {
+            padding: 0.5rem 1.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 1.5rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Dashboard Page */
+        .dashboard-header {
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .dashboard-header p {
+            color: var(--text-medium);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px var(--shadow);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stat-icon.blue { background: #dbeafe; color: var(--primary); }
+        .stat-icon.green { background: #d1fae5; color: var(--success); }
+        .stat-icon.orange { background: #fed7aa; color: var(--warning); }
+        .stat-icon.purple { background: #e9d5ff; color: #7c3aed; }
+
+        .stat-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .stat-trend.up { color: var(--success); }
+        .stat-trend.down { color: var(--danger); }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-medium);
+        }
+
+        .stat-footer {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.8125rem;
+            color: var(--text-medium);
+        }
+
+        /* Content Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .card-action {
+            font-size: 0.875rem;
+            color: var(--primary);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* Ticket List */
+        .ticket-item {
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .ticket-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px var(--shadow);
+            transform: translateX(4px);
+        }
+
+        .ticket-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 0.5rem;
+        }
+
+        .ticket-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-medium);
+        }
+
+        .ticket-title-text {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .ticket-meta {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 0.25rem 0.625rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .badge-priority-critical { background: #fee2e2; color: #991b1b; }
+        .badge-priority-high { background: #fed7aa; color: #9a3412; }
+        .badge-priority-medium { background: #fef3c7; color: #92400e; }
+        .badge-priority-low { background: #dbeafe; color: #1e40af; }
+
+        .badge-status-open { background: #dbeafe; color: #1e40af; }
+        .badge-status-in-progress { background: #e9d5ff; color: #6b21a8; }
+        .badge-status-resolved { background: #d1fae5; color: #065f46; }
+        .badge-status-closed { background: #f1f5f9; color: #475569; }
+
+        /* Create Ticket Page */
+        .create-ticket-layout {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9375rem;
+            transition: all 0.2s ease;
+            font-family: 'IBM Plex Sans', sans-serif;
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .ai-suggestions {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border: 1px solid #93c5fd;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .ai-suggestions-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .ai-suggestions-title {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .suggestion-item {
+            padding: 0.75rem;
+            background: white;
+            border: 1px solid #93c5fd;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .suggestion-item:hover {
+            background: #eff6ff;
+            border-color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        /* Chatbot */
+        .chatbot-panel {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 400px;
+            max-height: 600px;
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .chatbot-hidden {
+            display: none;
+        }
+
+        .chatbot-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chatbot-title {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .chatbot-close {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+
+        .chatbot-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            max-height: 400px;
+        }
+
+        .chat-message {
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .chat-message.bot {
+            justify-content: flex-start;
+        }
+
+        .chat-message.user {
+            justify-content: flex-end;
+        }
+
+        .chat-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .chat-avatar.bot {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .chat-avatar.user {
+            background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+            color: white;
+        }
+
+        .chat-bubble {
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            max-width: 70%;
+        }
+
+        .chat-bubble.bot {
+            background: var(--bg-light);
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-bubble.user {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .quick-suggestions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .quick-suggestion-btn {
+            padding: 0.5rem 0.75rem;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+
+        .quick-suggestion-btn:hover {
+            background: var(--bg-light);
+            border-color: var(--primary);
+        }
+
+        .chatbot-input-area {
+            border-top: 1px solid var(--border);
+            padding: 1rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .chatbot-input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: 'IBM Plex Sans', sans-serif;
+        }
+
+        .chatbot-send {
+            padding: 0.75rem 1rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chatbot-fab {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 24px rgba(30, 64, 175, 0.4);
+            transition: all 0.2s ease;
+            z-index: 999;
+        }
+
+        .chatbot-fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 32px rgba(30, 64, 175, 0.5);
+        }
+
+        .chatbot-fab-hidden {
+            display: none;
+        }
+
+        /* Ticket Details Page */
+        .ticket-details-layout {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 2rem;
+        }
+
+        .ticket-details-header {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .ticket-details-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            color: var(--text-medium);
+            margin-bottom: 0.5rem;
+        }
+
+        .ticket-details-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .ticket-details-badges {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .timeline {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-left: 2px solid var(--border);
+            padding-left: 1.5rem;
+            margin-left: 0.5rem;
+            position: relative;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 1.5rem;
+            width: 10px;
+            height: 10px;
+            background: var(--primary);
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .timeline-content {
+            flex: 1;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .timeline-text {
+            font-size: 0.875rem;
+            color: var(--text-medium);
+        }
+
+        .timeline-time {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            margin-top: 0.25rem;
+        }
+
+        /* Knowledge Base */
+        .search-box {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 1rem;
+            margin-bottom: 2rem;
+            background: var(--bg-white);
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.1);
+        }
+
+        .kb-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .kb-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .kb-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px var(--shadow);
+            border-color: var(--primary);
+        }
+
+        .kb-category {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: var(--bg-light);
+            color: var(--primary);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .kb-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .kb-summary {
+            color: var(--text-medium);
+            font-size: 0.9375rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .kb-stats {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.875rem;
+            color: var(--text-medium);
+        }
+
+        .kb-stat {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .create-ticket-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .ticket-details-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chatbot-panel {
+                width: calc(100% - 2rem);
+                left: 1rem;
+                right: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    <i data-lucide="zap" style="color: white; width: 28px; height: 28px;"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>POWERGRID IT Helpdesk</h1>
+                    <p>Smart AI-Powered Ticketing System</p>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <button id="headerCreateTicket" class="btn btn-primary" onclick="navigateTo('create-ticket')">
+                    <i data-lucide="plus" style="width: 18px; height: 18px;"></i>
+                    Create Ticket
+                </button>
+                <div class="user-avatar" id="userAvatar" onclick="window.location.href='profile.html'" style="cursor: pointer;" title="View Profile"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav>
+                <div class="nav-item active" onclick="navigateTo('dashboard')">
+                    <i data-lucide="layout-dashboard" style="width: 20px; height: 20px;"></i>
+                    <span>Dashboard</span>
+                </div>
+                <div class="nav-item" onclick="navigateTo('create-ticket')">
+                    <i data-lucide="plus-circle" style="width: 20px; height: 20px;"></i>
+                    <span>Create Ticket</span>
+                </div>
+                <div class="nav-item" onclick="navigateTo('my-tickets')">
+                    <i data-lucide="ticket" style="width: 20px; height: 20px;"></i>
+                    <span>My Tickets</span>
+                </div>
+
+                
+                <div class="nav-section employee-only">Resources</div>
+                <div class="nav-item employee-only" onclick="navigateTo('knowledge-base')">
+                    <i data-lucide="book-open" style="width: 20px; height: 20px;"></i>
+                    <span>Knowledge Base</span>
+                </div>
+                <div class="nav-item employee-only">
+                    <i data-lucide="bell" style="width: 20px; height: 20px;"></i>
+                    <span>Notifications</span>
+                </div>
+                
+                <div class="nav-section support-only">Support Desk</div>
+                <div class="nav-item support-only" onclick="navigateTo('all-tickets')" style="cursor:pointer;">
+                    <i data-lucide="list-checks" style="width: 20px; height: 20px;"></i>
+                    <span>All Tickets</span>
+                </div>
+                <div class="nav-item support-only" onclick="window.location.href='Team-management.html'" style="cursor:pointer;">
+                    <i data-lucide="users" style="width: 20px; height: 20px;"></i>
+                    <span>My Team</span>
+                </div>
+                <div class="nav-item support-only" onclick="window.location.href='analytics.html'" style="cursor:pointer;">
+                    <i data-lucide="bar-chart-2" style="width: 20px; height: 20px;"></i>
+                    <span>Team Analytics</span>
+                </div>
+
+                <div class="nav-section admin-only">Admin Controls</div>
+                <div class="nav-item admin-only" onclick="navigateTo('admin-dashboard')" style="cursor:pointer;">
+                    <i data-lucide="layout-dashboard" style="width: 20px; height: 20px;"></i>
+                    <span>Admin Dashboard</span>
+                </div>
+                <div class="nav-item admin-only" onclick="navigateTo('all-tickets')" style="cursor:pointer;">
+                    <i data-lucide="list" style="width: 20px; height: 20px;"></i>
+                    <span>All Tickets</span>
+                </div>
+                <div class="nav-item admin-only" onclick="navigateTo('employee-module')" style="cursor:pointer;">
+                    <i data-lucide="user-circle" style="width: 20px; height: 20px;"></i>
+                    <span>Employees</span>
+                </div>
+                <div class="nav-item admin-only" onclick="navigateTo('supporter-module')" style="cursor:pointer;">
+                    <i data-lucide="headset" style="width: 20px; height: 20px;"></i>
+                    <span>Support Staff</span>
+                </div>
+                <div class="nav-item admin-only" onclick="window.location.href='configuration.html'" style="cursor:pointer;">
+                    <i data-lucide="settings" style="width: 20px; height: 20px;"></i>
+                    <span>Configuration</span>
+                </div>
+                <div class="nav-item admin-only" onclick="window.location.href='Team-management.html'" style="cursor:pointer;">
+                    <i data-lucide="users-cog" style="width: 20px; height: 20px;"></i>
+                    <span>Team Management</span>
+                </div>
+                <div class="nav-item admin-only" onclick="window.location.href='analytics.html'" style="cursor:pointer;">
+                    <i data-lucide="pie-chart" style="width: 20px; height: 20px;"></i>
+                    <span>Full Analytics</span>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Page -->
+            <div id="dashboard" class="page active">
+                <div class="dashboard-header">
+                    <h2>Dashboard Overview</h2>
+                    <p id="welcomeText">Welcome back! Here's your IT helpdesk summary for today.</p>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon blue">
+                                <i data-lucide="ticket" style="width: 24px; height: 24px;"></i>
+                            </div>
+                            <div class="stat-trend up">
+                                <i data-lucide="trending-up" style="width: 16px; height: 16px;"></i>
+                                <span id="dashTotalTrend">--%</span>
+                            </div>
+                        </div>
+                        <div class="stat-value" id="dashTotalTickets">--</div>
+                        <div class="stat-label">Total Tickets</div>
+                        <div class="stat-footer">
+                            <strong>23</strong> open · <strong>12</strong> in progress
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon green">
+                                <i data-lucide="check-circle-2" style="width: 24px; height: 24px;"></i>
+                            </div>
+                            <div class="stat-trend up">
+                                <i data-lucide="trending-up" style="width: 16px; height: 16px;"></i>
+                                <span id="dashResolvedTrend">--%</span>
+                            </div>
+                        </div>
+                        <div class="stat-value" id="dashResolvedTickets">--</div>
+                        <div class="stat-label">Resolved Tickets</div>
+                        <div class="stat-footer">
+                            <strong>8</strong> resolved today
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon orange">
+                                <i data-lucide="clock" style="width: 24px; height: 24px;"></i>
+                            </div>
+                            <div class="stat-trend down">
+                                <i data-lucide="trending-down" style="width: 16px; height: 16px;"></i>
+                                5%
+                            </div>
+                        </div>
+                        <div class="stat-value" id="dashAvgRes">--</div>
+                        <div class="stat-label">Avg. Resolution Time</div>
+                        <div class="stat-footer">
+                            Target: <strong>6 hours</strong>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon purple">
+                                <i data-lucide="target" style="width: 24px; height: 24px;"></i>
+                            </div>
+                            <div class="stat-trend up">
+                                <i data-lucide="trending-up" style="width: 16px; height: 16px;"></i>
+                                <span id="dashSlaTrend">--%</span>
+                            </div>
+                        </div>
+                        <div class="stat-value" id="dashSla">--%</div>
+                        <div class="stat-label">SLA Compliance</div>
+                        <div class="stat-footer">
+                            <strong>5</strong> breached this week
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Grid -->
+                <div class="content-grid">
+                    <!-- Recent Tickets -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Recent Tickets</h3>
+                            <a class="card-action" href="#" onclick="navigateTo('my-tickets'); return false;">View All</a>
+                        </div>
+                        <div id="recentTicketsContainer">
+                            <!-- Tickets will be dynamically loaded here by loadTickets() -->
+                            <div style="text-align: center; padding: 2rem; color: var(--text-medium);">
+                                No recent tickets.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SLA Status -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">SLA Status</h3>
+                        </div>
+                        <div>
+                            <div style="margin-bottom: 1.5rem;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <span style="font-weight: 600; color: var(--success);">Within SLA</span>
+                                    <span style="font-weight: 700; color: var(--success);">127 (86.4%)</span>
+                                </div>
+                                <div style="height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+                                    <div style="height: 100%; width: 86.4%; background: var(--success);"></div>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <span style="font-weight: 600; color: var(--warning);">At Risk</span>
+                                    <span style="font-weight: 700; color: var(--warning);">15 (10.2%)</span>
+                                </div>
+                                <div style="height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+                                    <div style="height: 100%; width: 10.2%; background: var(--warning);"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <span style="font-weight: 600; color: var(--danger);">Breached</span>
+                                    <span style="font-weight: 700; color: var(--danger);">5 (3.4%)</span>
+                                </div>
+                                <div style="height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+                                    <div style="height: 100%; width: 3.4%; background: var(--danger);"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Insights Card -->
+                <div class="card" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-color: #93c5fd;">
+                    <div style="display: flex; align-items: start; gap: 1rem;">
+                        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i data-lucide="sparkles" style="width: 24px; height: 24px; color: white;"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <h3 style="font-size: 1.125rem; font-weight: 700; color: var(--primary); margin-bottom: 0.5rem;">AI Insights & Recommendations</h3>
+                            <ul style="list-style: none; padding: 0;">
+                                <li style="padding: 0.5rem 0; color: var(--text-dark);">
+                                    <strong>Peak Time Alert:</strong> High ticket volume detected between 10 AM - 12 PM
+                                </li>
+                                <li style="padding: 0.5rem 0; color: var(--text-dark);">
+                                    <strong>Category Trend:</strong> Network issues increased by 35% this week
+                                </li>
+                                <li style="padding: 0.5rem 0; color: var(--text-dark);">
+                                    <strong>Automation Opportunity:</strong> 18 tickets could have been auto-resolved
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create Ticket Page -->
+            <div id="create-ticket" class="page">
+                <div class="dashboard-header">
+                    <h2>Create New Ticket</h2>
+                    <p>Describe your issue and our AI will help route it to the right team</p>
+                </div>
+
+                <div class="create-ticket-layout">
+                    <div>
+                        <!-- AI Quick Create Card -->
+                        <div class="card" style="margin-bottom: 1.5rem; border: 1px solid var(--primary); background: linear-gradient(to right, rgba(30, 64, 175, 0.05), transparent);">
+                            <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                                <div style="background: var(--primary); color: white; padding: 0.5rem; border-radius: 8px;">
+                                    <i data-lucide="sparkles" style="width: 20px; height: 20px;"></i>
+                                </div>
+                                <div style="flex: 1;">
+                                    <h3 style="font-weight: 700; color: var(--primary); margin-bottom: 0.5rem;">🪄 AI Ticket Creation</h3>
+                                    <p style="font-size: 0.875rem; color: var(--text-medium); margin-bottom: 1rem;">Describe your issue in a single sentence, and AI will auto-fill the ticket details.</p>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <input type="text" id="aiPromptInput" class="form-input" placeholder="e.g. My Outlook keeps crashing when I open PDFs..." style="flex: 1;">
+                                        <button type="button" class="btn btn-primary" onclick="generateAITicket()" id="btnGenerateAI">Auto-Fill</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <form id="createTicketForm" onsubmit="return handleTicketSubmit(event)">
+                                <div class="form-group">
+                                    <label class="form-label">Issue Title *</label>
+                                    <input type="text" class="form-input" placeholder="Brief description of your issue" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Category *</label>
+                                    <select class="form-select" required>
+                                        <option value="">Select a category</option>
+                                        <option value="hardware">💻 Hardware</option>
+                                        <option value="software">📦 Software</option>
+                                        <option value="network">🌐 Network</option>
+                                        <option value="access">🔐 Access & Permissions</option>
+                                        <option value="email">📧 Email</option>
+                                        <option value="other">❓ Other</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Priority</label>
+                                    <select class="form-select">
+                                        <option value="low">Low - Can wait a few days</option>
+                                        <option value="medium" selected>Medium - Should be resolved soon</option>
+                                        <option value="high">High - Urgent, work is blocked</option>
+                                        <option value="critical">Critical - System down, major impact</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Detailed Description *</label>
+                                    <textarea class="form-textarea" placeholder="Please provide as much detail as possible about your issue. Include error messages, steps to reproduce, etc." required></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Attachments</label>
+                                    <input type="file" class="form-input" multiple>
+                                    <p style="font-size: 0.875rem; color: var(--text-medium); margin-top: 0.5rem;">
+                                        Upload screenshots, error logs, or related documents (Max 10MB each)
+                                    </p>
+                                </div>
+
+                                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                                    <button type="submit" class="btn btn-primary" style="flex: 1;">
+                                        <i data-lucide="send" style="width: 18px; height: 18px;"></i>
+                                        Submit Ticket
+                                    </button>
+                                    <button type="button" class="btn" style="padding: 0.625rem 1.25rem; background: white; border: 1px solid var(--border); color: var(--text-dark);">
+                                        Save Draft
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div>
+                        <!-- AI Suggestions -->
+                        <div class="ai-suggestions">
+                            <div class="ai-suggestions-header">
+                                <i data-lucide="sparkles" style="width: 20px; height: 20px; color: var(--primary);"></i>
+                                <span class="ai-suggestions-title">AI Suggestions</span>
+                            </div>
+                            <p style="font-size: 0.875rem; color: var(--text-dark); margin-bottom: 1rem;">
+                                Based on your description, here are some quick solutions:
+                            </p>
+                            <div class="suggestion-item">
+                                <strong style="display: block; margin-bottom: 0.25rem;">Try Password Reset</strong>
+                                <span style="font-size: 0.875rem; color: var(--text-medium);">Most access issues can be resolved by resetting your password</span>
+                            </div>
+                            <div class="suggestion-item">
+                                <strong style="display: block; margin-bottom: 0.25rem;">Check System Status</strong>
+                                <span style="font-size: 0.875rem; color: var(--text-medium);">Verify if there's a known outage affecting your service</span>
+                            </div>
+                            <div class="suggestion-item">
+                                <strong style="display: block; margin-bottom: 0.25rem;">Clear Browser Cache</strong>
+                                <span style="font-size: 0.875rem; color: var(--text-medium);">Many login issues are resolved by clearing browser data</span>
+                            </div>
+                        </div>
+
+                        <!-- Related Knowledge Base Articles -->
+                        <div class="card">
+                            <h3 class="card-title" style="margin-bottom: 1rem;">Related Articles</h3>
+                            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                <div style="padding: 0.75rem; background: var(--bg-light); border-radius: 8px; cursor: pointer;">
+                                    <strong style="display: block; font-size: 0.9375rem; color: var(--text-dark); margin-bottom: 0.25rem;">
+                                        How to Reset SAP Password
+                                    </strong>
+                                    <span style="font-size: 0.8125rem; color: var(--text-medium);">
+                                        <i data-lucide="eye" style="width: 12px; height: 12px; display: inline; vertical-align: text-bottom;"></i>
+                                        1,234 views
+                                    </span>
+                                </div>
+                                <div style="padding: 0.75rem; background: var(--bg-light); border-radius: 8px; cursor: pointer;">
+                                    <strong style="display: block; font-size: 0.9375rem; color: var(--text-dark); margin-bottom: 0.25rem;">
+                                        Troubleshooting Login Issues
+                                    </strong>
+                                    <span style="font-size: 0.8125rem; color: var(--text-medium);">
+                                        <i data-lucide="eye" style="width: 12px; height: 12px; display: inline; vertical-align: text-bottom;"></i>
+                                        987 views
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Tickets Page -->
+            <div id="my-tickets" class="page">
+                <div class="dashboard-header">
+                    <h2>My Tickets</h2>
+                    <p>Track and manage all your support requests</p>
+                </div>
+
+                <!-- Filters -->
+                <div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+                    <button class="btn" style="padding: 0.5rem 1rem; background: var(--primary); color: white; border: none;">
+                        All (15)
+                    </button>
+                    <button class="btn" style="padding: 0.5rem 1rem; background: white; border: 1px solid var(--border); color: var(--text-dark);">
+                        Open (7)
+                    </button>
+                    <button class="btn" style="padding: 0.5rem 1rem; background: white; border: 1px solid var(--border); color: var(--text-dark);">
+                        In Progress (3)
+                    </button>
+                    <button class="btn" style="padding: 0.5rem 1rem; background: white; border: 1px solid var(--border); color: var(--text-dark);">
+                        Resolved (5)
+                    </button>
+                    <div style="flex: 1;"></div>
+                    <input type="search" class="form-input" placeholder="Search tickets..." style="max-width: 300px; padding: 0.5rem 1rem;">
+                </div>
+
+                <div class="card" id="myTicketsContainer">
+                    <!-- Tickets will be loaded here dynamically -->
+                    <div style="text-align: center; padding: 3rem; color: var(--text-medium);">
+                        <i data-lucide="inbox" style="width: 48px; height: 48px; color: var(--border); margin-bottom: 1rem;"></i>
+                        <p>You have no tickets matching this filter.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Dashboard Landing Page -->
+            <div id="admin-dashboard" class="page admin-only">
+                <div class="dashboard-header" style="margin-bottom: 2rem; background: linear-gradient(135deg, #eff6ff, #dbeafe); border: 1px solid #bfdbfe; padding: 3rem 2rem; border-radius: 16px; color: #1e3a8a; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                    <h2 id="adminWelcomeTitle" style="font-size: 2.25rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -0.025em;">Welcome Admin!</h2>
+                    <p style="font-size: 1.1rem; opacity: 0.85; max-width: 600px;">
+                        You have full control over the POWERGRID IT Helpdesk ecosystem. Select a module from the sidebar to manage standard tickets, configuration, team roles, or system analytics.
+                    </p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                    <div class="stat-card" style="cursor:pointer;" onclick="navigateTo('all-tickets')">
+                        <div class="stat-header">
+                            <div class="stat-icon blue">
+                                <i data-lucide="list" style="width: 24px; height: 24px;"></i>
+                            </div>
+                        </div>
+                        <div class="stat-label" style="font-size: 1.25rem; margin-top: 1rem; color: var(--text-dark);">All Tickets</div>
+                        <div class="stat-footer" style="margin-top: 0.5rem;">Manage global employee tickets</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin All Tickets Page -->
+            <div id="all-tickets" class="page admin-only">
+                <div class="dashboard-header">
+                    <h2>All Employee Tickets</h2>
+                    <p>Manage and update IT support tickets system-wide</p>
+                </div>
+
+                <!-- Filters -->
+                <div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+                    <button class="btn" onclick="filterAllTickets('All')" style="padding: 0.5rem 1rem; background: var(--primary); color: white; border: none;">All</button>
+                    <button class="btn" onclick="filterAllTickets('Open')" style="padding: 0.5rem 1rem; background: white; border: 1px solid var(--border); color: var(--text-dark);">Open</button>
+                    <button class="btn" onclick="filterAllTickets('In Progress')" style="padding: 0.5rem 1rem; background: white; border: 1px solid var(--border); color: var(--text-dark);">In Progress</button>
+                    <button class="btn" onclick="filterAllTickets('Resolved')" style="padding: 0.5rem 1rem; background: white; border: 1px solid var(--border); color: var(--text-dark);">Resolved</button>
+                    <div style="flex: 1;"></div>
+                    <select class="form-input" id="allTicketsCategoryFilter" onchange="filterAllTickets(null, this.value)" style="max-width: 200px; padding: 0.5rem 1rem;">
+                        <option value="All">All Categories</option>
+                        <option value="hardware">Hardware</option>
+                        <option value="software">Software</option>
+                        <option value="network">Network</option>
+                        <option value="access">Access</option>
+                        <option value="email">Email</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="card" id="allTicketsContainer">
+                    <!-- Admin Tickets will be loaded here dynamically -->
+                    <div style="text-align: center; padding: 3rem; color: var(--text-medium);">
+                        <i data-lucide="list" style="width: 48px; height: 48px; color: var(--border); margin-bottom: 1rem;"></i>
+                        <p>No tickets available in the system.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Ticket Details Page -->
+            <div id="ticket-details" class="page">
+                <!-- Content loaded dynamically via showTicketDetails() -->
+            </div>
+
+            <!-- Knowledge Base Page -->
+            <div id="knowledge-base" class="page">
+                <div class="dashboard-header">
+                    <h2>Knowledge Base</h2>
+                    <p>Search our comprehensive library of solutions and guides</p>
+                </div>
+
+                <input type="search" id="kbSearchInput" class="search-box" placeholder="Search for solutions, guides, or common issues..." onkeyup="filterKB()">
+
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="font-weight: 700; margin-bottom: 1rem; color: var(--text-dark);">Popular Categories</h3>
+                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                        <button class="badge kb-cat-btn" onclick="filterKB('All')" style="padding: 0.5rem 1rem; cursor: pointer; background: var(--primary); color: white; border: none;">
+                            All Articles
+                        </button>
+                        <button class="badge kb-cat-btn" onclick="filterKB('Access Management')" style="padding: 0.5rem 1rem; cursor: pointer; background: white; border: 1px solid var(--border); color: var(--text-dark);">
+                            🔐 Access Management
+                        </button>
+                        <button class="badge kb-cat-btn" onclick="filterKB('Hardware')" style="padding: 0.5rem 1rem; cursor: pointer; background: white; border: 1px solid var(--border); color: var(--text-dark);">
+                            💻 Hardware
+                        </button>
+                        <button class="badge kb-cat-btn" onclick="filterKB('Software')" style="padding: 0.5rem 1rem; cursor: pointer; background: white; border: 1px solid var(--border); color: var(--text-dark);">
+                            📦 Software
+                        </button>
+                        <button class="badge kb-cat-btn" onclick="filterKB('Network')" style="padding: 0.5rem 1rem; cursor: pointer; background: white; border: 1px solid var(--border); color: var(--text-dark);">
+                            🌐 Network
+                        </button>
+                    </div>
+                </div>
+
+                <div class="kb-grid" id="kbGrid">
+                    <!-- Articles will be rendered here dynamically -->
+                </div>
+            </div>
+
+            <!-- Employee Module (Admin Only) -->
+            <div id="employee-module" class="page admin-only">
+                <div class="dashboard-header">
+                    <h2>Employee Directory</h2>
+                    <p>Manage all registered employees and view their ticketing history.</p>
+                </div>
+                <!-- Controls -->
+                <div class="controls-bar" style="display:flex; justify-content:space-between; margin-bottom:1.5rem;">
+                    <input type="search" id="employeeSearchBox" class="search-box" style="margin-bottom:0; max-width:400px;" placeholder="Search employees by name, ID, or email..." onkeyup="filterEmployees()">
+                </div>
+                <!-- Employees Table -->
+                <div class="card" style="overflow-x: auto;">
+                    <table class="data-table" style="width:100%; text-align:left; border-collapse:collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--border);">
+                                <th style="padding:1rem;">Employee</th>
+                                <th style="padding:1rem;">Emp. ID</th>
+                                <th style="padding:1rem;">Role</th>
+                                <th style="padding:1rem;">Contact</th>
+                                <th style="padding:1rem;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employeeTableBody">
+                            <!-- Loaded via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Supporter Module (Admin Only) -->
+            <div id="supporter-module" class="page admin-only">
+                <div class="dashboard-header">
+                    <h2>Support Staff Management</h2>
+                    <p>Monitor IT/Support engineers and their active workload.</p>
+                </div>
+                <!-- Supporters List -->
+                <div class="card" style="overflow-x: auto;">
+                    <table class="data-table" style="width:100%; text-align:left; border-collapse:collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--border);">
+                                <th style="padding:1rem;">Supporter</th>
+                                <th style="padding:1rem;">Emp. ID</th>
+                                <th style="padding:1rem;">Email</th>
+                                <th style="padding:1rem;">Active Workload</th>
+                                <th style="padding:1rem;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="supporterTableBody">
+                            <!-- Loaded via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Chatbot FAB -->
+    <div class="chatbot-fab" id="chatbotFab" onclick="toggleChatbot()">
+        <i data-lucide="message-circle" style="width: 28px; height: 28px; color: white;"></i>
+    </div>
+
+    <!-- Chatbot Panel -->
+    <div class="chatbot-panel chatbot-hidden" id="chatbotPanel">
+        <div class="chatbot-header">
+            <div>
+                <div class="chatbot-title">AI Assistant</div>
+                <div style="font-size: 0.75rem; opacity: 0.9;">Always here to help</div>
+            </div>
+            <button class="chatbot-close" onclick="toggleChatbot()">
+                <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+            </button>
+        </div>
+        
+        <div class="chatbot-messages" id="chatbotMessages">
+            <div class="chat-message bot">
+                <div class="chat-avatar bot">
+                    <i data-lucide="bot" style="width: 18px; height: 18px;"></i>
+                </div>
+                <div>
+                    <div class="chat-bubble bot">
+                        Hello! I'm your AI assistant. How can I help you with your IT issue today?
+                    </div>
+                    <div class="quick-suggestions">
+                        <button class="quick-suggestion-btn" onclick="sendQuickMessage('I need help with my email')">
+                            📧 I need help with my email
+                        </button>
+                        <button class="quick-suggestion-btn" onclick="sendQuickMessage('My laptop is not working')">
+                            💻 My laptop is not working
+                        </button>
+                        <button class="quick-suggestion-btn" onclick="sendQuickMessage('I cannot access a system')">
+                            🔐 I cannot access a system
+                        </button>
+                        <button class="quick-suggestion-btn" onclick="sendQuickMessage('I need software installed')">
+                            📦 I need software installed
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chatbot-input-area">
+            <input type="text" class="chatbot-input" id="chatbotInput" placeholder="Type your message..." onkeypress="handleChatEnter(event)">
+            <button class="chatbot-send" onclick="sendChatMessage()">
+                <i data-lucide="send" style="width: 20px; height: 20px;"></i>
+            </button>
+        </div>
+    </div>
+<script>
+/* ===============================
+   CONFIG
+=================================*/
+const API_URL = "http://localhost:5000/api/tickets";
+const TOKEN = localStorage.getItem("token");
+const USER = JSON.parse(localStorage.getItem("user"));
+
+if (!TOKEN || !USER) {
+  window.location.href = "login.html";
+} else {
+  // Apply Absolute Role-Based Access Control (DOM Removal)
+  const applyRBAC = () => {
+    const isEmployee = USER.role === "Employee";
+    const isSupport = USER.role === "Support" || USER.role === "IT Engineer";
+    const isAdmin = USER.role === "Admin";
+
+    if (isEmployee) {
+      // Remove Admin and Support specific elements
+      document.querySelectorAll(".admin-only, .support-only").forEach(el => el.remove());
+      // Make sure the normal dashboard is active
+      document.getElementById('dashboard').classList.add('active');
+    } else if (isSupport) {
+      // Remove normal navigation items except My Tickets and specific Support ones
+      document.querySelectorAll(".sidebar nav .nav-item").forEach(el => {
+        const text = el.innerText.trim();
+        if (!el.classList.contains("support-only") && text !== "Knowledge Base" && text !== "Admin Dashboard") {
+          el.remove();
+        }
+      });
+      // Remove employee dashboard stats
+      const empBoard = document.getElementById('dashboard');
+      if(empBoard) empBoard.remove();
+      
+      // Remove admin only elements except those shared with Support
+      document.querySelectorAll(".admin-only").forEach(el => {
+          const id = el.id;
+          const clickAttr = el.getAttribute("onclick") || "";
+          const sharedIds = ["admin-dashboard", "all-tickets", "ticket-details"];
+          const isShared = sharedIds.includes(id) || sharedIds.some(sid => clickAttr.includes(sid));
+          
+          if (!isShared) {
+              el.remove();
+          }
+      });
+
+      // Remove employee-only modules like Resources and Knowledge Base
+      document.querySelectorAll(".employee-only").forEach(el => el.remove());
+
+      // Remove create ticket button from header
+      const headerCreateTicket = document.getElementById("headerCreateTicket");
+      if (headerCreateTicket) headerCreateTicket.remove();
+
+      // Launch Support straight to admin-dashboard but with handler greeting
+      const adminWelcomeText = document.getElementById("adminWelcomeTitle");
+      if (adminWelcomeText) adminWelcomeText.textContent = `Welcome ${USER.name}!`;
+
+      // Rename Admin Dashboard to Handler Dashboard and position it first under Support Desk
+      const sharedDashLink = document.querySelector(".sidebar nav .nav-item[onclick=\"navigateTo('admin-dashboard')\"]");
+      const supportSection = document.querySelector(".nav-section.support-only");
+      if (sharedDashLink && supportSection) {
+          sharedDashLink.querySelector("span").textContent = "Handler Dashboard";
+          supportSection.insertAdjacentElement("afterend", sharedDashLink);
+      }
+      
+      // Navigate to admin-dashboard so they see the welcome text, which contains shortcuts
+      navigateTo('admin-dashboard');
+    } else if (isAdmin) {
+      // Admin sees specific admin modules
+      document.querySelectorAll(".sidebar nav .nav-item").forEach(el => {
+        const text = el.innerText.trim();
+        if (!el.classList.contains("admin-only")) {
+          el.remove();
+        }
+      });
+      // Remove normal employee stuff
+      document.querySelectorAll(".support-only, .employee-only").forEach(el => el.remove());
+      const empBoard = document.getElementById('dashboard');
+      if(empBoard) empBoard.remove();
+
+      // Remove header create ticket
+      const headerCreateTicket = document.getElementById("headerCreateTicket");
+      if (headerCreateTicket) headerCreateTicket.remove();
+
+      // Remove chatbot
+      const chatbot = document.getElementById("chatbotFab");
+      if (chatbot) chatbot.remove();
+
+      const adminWelcomeText = document.getElementById("adminWelcomeTitle");
+      if (adminWelcomeText) adminWelcomeText.textContent = `Welcome Admin ${USER.name}!`;
+
+      navigateTo('admin-dashboard');
+    }
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener("DOMContentLoaded", applyRBAC);
+  } else {
+    applyRBAC();
+  }
+}
+
+/* ===============================
+   INIT ICONS
+=================================*/
+lucide.createIcons();
+
+/* ===============================
+   NAVIGATION
+=================================*/
+function navigateTo(pageId) {
+  document.querySelectorAll(".page").forEach(page =>
+    page.classList.remove("active")
+  );
+  document.getElementById(pageId).classList.add("active");
+  
+  // Reload data based on page
+  if (pageId === 'my-tickets') loadTickets();
+  if (pageId === 'all-tickets') loadAllTickets();
+  if (pageId === 'admin-dashboard' && (USER.role === 'Admin' || USER.role === 'Support')) loadDashboardStats();
+  
+  lucide.createIcons();
+}
+
+/* ===============================
+   CREATE TICKET (PROTECTED)
+=================================*/
+const form = document.getElementById("createTicketForm");
+
+if (form) {
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const title = document.querySelector("#create-ticket input").value;
+    const category = document.querySelectorAll("#create-ticket select")[0].value;
+    const priority = document.querySelectorAll("#create-ticket select")[1].value;
+    const description = document.querySelector("#create-ticket textarea").value;
+
+    if (!title || !description) {
+      alert("Please fill in the title and description.");
+      return;
+    }
+
+    const ticket = {
+      title,
+      category,
+      priority,
+      description,
+      createdBy: USER.name
+    };
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${TOKEN}`
+        },
+        body: JSON.stringify(ticket)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert("❌ Failed to create ticket: " + (data.message || "Unknown error"));
+        console.error(data);
+        return;
+      }
+
+      alert("✅ Ticket created successfully!");
+      form.reset();
+      loadTickets();
+      navigateTo("my-tickets");
+
+    } catch (err) {
+      alert("❌ Backend not reachable. Make sure the server is running.");
+      console.error(err);
+    }
+  });
+}
+
+/* ===============================
+   LOAD USER TICKETS
+=================================*/
+let globalUserTickets = [];
+async function loadTickets() {
+  try {
+    const res = await fetch(API_URL, {
+      headers: {
+        "Authorization": `Bearer ${TOKEN}`
+      }
+    });
+
+    const tickets = await res.json();
+    globalUserTickets = tickets;
+
+    const container = document.querySelector("#my-tickets .card");
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    const myTickets = tickets.filter(ticket => ticket.createdBy === USER.name);
+
+    if (myTickets.length === 0) {
+      container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:2rem;">No tickets found. Create your first ticket!</p>';
+      return;
+    }
+
+    myTickets.forEach(ticket => {
+      const div = document.createElement("div");
+      div.className = "ticket-item";
+
+      div.innerHTML = `
+        <div class="ticket-header-row" style="cursor: pointer;" onclick="showTicketDetails('${ticket._id}', false)">
+          <div class="ticket-id">${ticket._id.slice(-6)}</div>
+          <span class="badge badge-priority-${ticket.priority}">
+            ${ticket.priority}
+          </span>
+        </div>
+
+        <div class="ticket-title-text" style="cursor: pointer;" onclick="showTicketDetails('${ticket._id}', false)">${ticket.title}</div>
+
+        <p style="font-size:0.875rem;color:#475569;cursor: pointer;" onclick="showTicketDetails('${ticket._id}', false)">
+          ${ticket.description.substring(0, 100)}${ticket.description.length > 100 ? '...' : ''}
+        </p>
+
+        <div class="ticket-meta">
+          <span class="badge badge-status-${ticket.status
+            .toLowerCase()
+            .replace(" ", "-")}" style="cursor: pointer;" onclick="showTicketDetails('${ticket._id}', false)">
+            ${ticket.status}
+          </span>
+
+          <span style="font-size:0.8rem;color:#94a3b8;">
+            ${new Date(ticket.createdAt).toLocaleString()}
+          </span>
+        </div>
+      `;
+
+      container.appendChild(div);
+    });
+
+  } catch (err) {
+    console.error("Failed to load tickets", err);
+  }
+}
+
+/* ===============================
+   LOAD ALL TICKETS (ADMIN)
+=================================*/
+let allTeams = [];
+async function loadTeams() {
+    try {
+        const res = await fetch("http://localhost:5000/api/teams", {
+            headers: { "Authorization": `Bearer ${TOKEN}` }
+        });
+        if(res.ok) {
+            allTeams = await res.json();
+        }
+    } catch(err) {
+        console.error("Failed to load teams");
+    }
+}
+
+let globalAllTickets = [];
+async function loadAllTickets() {
+  try {
+    if (allTeams.length === 0) await loadTeams();
+    
+    const res = await fetch(API_URL, {
+      headers: {
+        "Authorization": `Bearer ${TOKEN}`
+      }
+    });
+
+    let tickets = await res.json();
+    globalAllTickets = tickets; // Keep the global list for filtering
+    
+    // Filter tickets if the user is a Supporter or IT Engineer
+    if (USER.role === 'Support' || USER.role === 'IT Engineer') {
+        const userId = USER.id || USER._id;
+        const myTeamIds = allTeams
+            .filter(team => team.members.some(member => {
+                const memberId = (member && (member._id || member.id)) ? (member._id || member.id).toString() : (member ? member.toString() : null);
+                return memberId === userId;
+            }))
+            .map(team => team._id.toString());
+            
+        if (myTeamIds.length === 0) {
+            const container = document.querySelector("#allTicketsContainer");
+            if (container) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 3rem; color: var(--text-medium);">
+                        <i data-lucide="info" style="width: 48px; height: 48px; color: var(--border); margin-bottom: 1rem;"></i>
+                        <p>You are not currently assigned to any Support Team.<br/>Please contact an administrator to be assigned to a team so you can manage tickets.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
+            return;
+        }
+
+        tickets = tickets.filter(ticket => 
+            ticket.assignedTeam && myTeamIds.includes(ticket.assignedTeam._id.toString())
+        );
+    }
+
+    renderAllTickets(tickets);
+  } catch(err) {
+      console.error("Failed to fetch all tickets", err);
+  }
+}
+
+function renderAllTickets(tickets) {
+    const container = document.querySelector("#allTicketsContainer");
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    if (tickets.length === 0) {
+      container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:2rem;">No historical tickets found in database.</p>';
+      return;
+    }
+
+    tickets.forEach(ticket => {
+      const div = document.createElement("div");
+      div.className = "ticket-item";
+      
+      const teamOptions = allTeams.map(t => 
+          `<option value="${t._id}" ${ticket.assignedTeam && ticket.assignedTeam._id === t._id ? 'selected' : ''}>${t.name}</option>`
+      ).join("");
+
+      // Render Admin UI allowing status & team update
+      div.innerHTML = `
+        <div class="ticket-header-row" style="align-items: center; cursor:pointer;" onclick="toggleTicketDetails('${ticket._id}')">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div class="ticket-id">${ticket._id.slice(-6)}</div>
+            <span style="font-size:0.8rem; font-weight: 600; color:var(--primary); background:#eff6ff; padding:2px 8px; border-radius:12px;">By: ${ticket.createdBy}</span>
+            <span style="font-size:0.8rem; font-weight: 600; color:var(--success); background:#d1fae5; padding:2px 8px; border-radius:12px;">Team: ${ticket.assignedTeam ? ticket.assignedTeam.name : 'Unassigned'}</span>
+          </div>
+          <span class="badge badge-priority-${ticket.priority}">
+            ${ticket.priority}
+          </span>
+        </div>
+
+        <div class="ticket-title-text" style="cursor:pointer;" onclick="toggleTicketDetails('${ticket._id}')">${ticket.title}</div>
+
+        <p style="font-size:0.875rem;color:#475569; cursor:pointer;" onclick="toggleTicketDetails('${ticket._id}')">
+          ${ticket.description.substring(0, 150)}${ticket.description.length > 150 ? '...' : ''}
+        </p>
+
+        <div class="ticket-meta" style="justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border);">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-medium);">Action:</span>
+            <select class="form-input" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; font-weight: 600; min-width: 120px;" onchange="updateTicketStatus('${ticket._id}', this.value)">
+                <option value="Open" ${ticket.status === 'Open' ? 'selected' : ''}>Open</option>
+                <option value="In Progress" ${ticket.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                <option value="Resolved" ${ticket.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
+            </select>
+            <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-medium); margin-left: 0.5rem;">Assign Team:</span>
+            <select class="form-input" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; font-weight: 600; min-width: 120px;" onchange="assignTicketToTeam('${ticket._id}', this.value)">
+                <option value="">Unassigned</option>
+                ${teamOptions}
+            </select>
+          </div>
+
+          <span style="font-size:0.8rem;color:#94a3b8;">
+            ${new Date(ticket.createdAt).toLocaleString()}
+          </span>
+        </div>
+        
+        <div id="ticket-details-${ticket._id}" style="display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+            <div style="display: flex; gap: 2rem; margin-bottom: 1rem; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 200px;">
+                    <h4 style="font-size: 0.875rem; color: var(--text-dark); margin-bottom: 0.5rem;">Creator Details</h4>
+                    <p style="font-size: 0.8rem; color: var(--text-medium); margin-bottom: 0.25rem;"><strong>Name:</strong> ${ticket.employeeName || ticket.createdBy}</p>
+                    <p style="font-size: 0.8rem; color: var(--text-medium); margin-bottom: 0.25rem;"><strong>Emp ID:</strong> ${ticket.employeeEmpId || 'N/A'}</p>
+                    <p style="font-size: 0.8rem; color: var(--text-medium); margin-bottom: 0.25rem;"><strong>Contact:</strong> ${ticket.contact || 'N/A'}</p>
+                </div>
+                <div style="flex: 2; min-width: 300px;">
+                    <h4 style="font-size: 0.875rem; color: var(--text-dark); margin-bottom: 0.5rem;">Ticket Tracking (History)</h4>
+                    <div style="max-height: 120px; overflow-y: auto; background: var(--bg-light); padding: 0.5rem; border-radius: 4px; border: 1px solid var(--border); font-size: 0.75rem;">
+                        ${ticket.history && ticket.history.length > 0 
+                            ? ticket.history.map(h => `<div style="margin-bottom: 4px; padding-bottom: 4px; border-bottom: 1px solid #e2e8f0;">
+                                <strong>${new Date(h.timestamp).toLocaleString()} - ${h.userName} (${h.action})</strong><br/>
+                                <span style="color: var(--text-medium);">${h.details}</span>
+                                </div>`).join("")
+                            : "No history found."
+                        }
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <textarea id="ticket-update-text-${ticket._id}" class="form-input" placeholder="Type an update or comment..." style="flex: 1; min-height: 38px; padding: 0.4rem; font-size: 0.8rem; border-radius: 4px; border: 1px solid var(--border); resize: vertical;"></textarea>
+                <button class="btn btn-primary" style="padding: 0 1rem; font-size: 0.8rem; white-space: nowrap;" onclick="postTicketUpdate('${ticket._id}')">Post Update</button>
+            </div>
+        </div>
+      `;
+
+      container.appendChild(div);
+    });
+}
+
+// ─── FILTERING AND TICKET DETAILS ───
+let currentStatusFilter = 'All';
+let currentCategoryFilter = 'All';
+
+function filterAllTickets(status, category) {
+    if (status) currentStatusFilter = status;
+    if (category) currentCategoryFilter = category;
+    
+    let filtered = globalAllTickets;
+    
+    if (currentStatusFilter !== 'All') {
+        filtered = filtered.filter(t => t.status === currentStatusFilter);
+    }
+    
+    if (currentCategoryFilter !== 'All') {
+        filtered = filtered.filter(t => t.category.toLowerCase() === currentCategoryFilter.toLowerCase());
+    }
+    
+    renderAllTickets(filtered);
+}
+
+function showTicketDetails(id, isAdminView) {
+    const ticket = isAdminView 
+        ? globalAllTickets.find(t => t._id === id)
+        : globalUserTickets.find(t => t._id === id) || globalAllTickets.find(t => t._id === id);
+        
+    if (!ticket) return;
+
+    let progressPct = 10;
+    let progressText = 'Ticket Received & Analyzing...';
+    if (ticket.status === 'In Progress') { progressPct = 50; progressText = ticket.assignedTeam ? 'Assigned Team is working on it' : 'Support is working on it'; }
+    if (ticket.status === 'Resolved') { progressPct = 100; progressText = 'Issue Successfully Resolved'; }
+
+    // Prepare team dropdown options for support/admin
+    const teamOptions = allTeams.map(t => 
+        `<option value="${t._id}" ${ticket.assignedTeam && ticket.assignedTeam._id === t._id ? 'selected' : ''}>${t.name}</option>`
+    ).join("");
+
+    const isPrivileged = USER.role === 'Admin' || USER.role === 'Support' || USER.role === 'IT Engineer';
+
+    const privilegedActions = isPrivileged ? `
+        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border);">
+            <div style="font-size: 0.8125rem; color: var(--text-medium); margin-bottom: 0.25rem; font-weight: 600;">Update Status</div>
+            <select class="form-input" style="padding: 0.4rem; font-size: 0.875rem; width: 100%; margin-bottom: 1rem;" onchange="updateTicketStatus('${ticket._id}', this.value)">
+                <option value="Open" ${ticket.status === 'Open' ? 'selected' : ''}>Open</option>
+                <option value="In Progress" ${ticket.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                <option value="Resolved" ${ticket.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
+            </select>
+            
+            <div style="font-size: 0.8125rem; color: var(--text-medium); margin-bottom: 0.25rem; font-weight: 600;">Re-Assign Team</div>
+            <select class="form-input" style="padding: 0.4rem; font-size: 0.875rem; width: 100%;" onchange="assignTicketToTeam('${ticket._id}', this.value)">
+                <option value="">Unassigned</option>
+                ${teamOptions}
+            </select>
+        </div>
+    ` : '';
+
+    const detailsPage = document.getElementById('ticket-details');
+    if (!detailsPage) return;
+
+    detailsPage.innerHTML = `
+        <div style="margin-bottom: 1.5rem;">
+            <button onclick="navigateTo('${isAdminView ? 'all-tickets' : 'my-tickets'}')" style="background: none; border: none; color: var(--primary); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                <i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i>
+                Back to ${isAdminView ? 'All Tickets' : 'My Tickets'}
+            </button>
+        </div>
+
+        <div class="ticket-details-layout">
+            <div>
+                <!-- Ticket Header -->
+                <div class="ticket-details-header">
+                    <div class="ticket-details-id">${ticket._id.slice(-6).toUpperCase()}</div>
+                    <h2 class="ticket-details-title">${ticket.title}</h2>
+                    <div class="ticket-details-badges">
+                        <span class="badge badge-status-${ticket.status.toLowerCase().replace(" ", "-")}" style="font-size: 0.875rem; padding: 0.5rem 1rem;">
+                            <i data-lucide="activity" style="width: 16px; height: 16px;"></i>
+                            ${ticket.status}
+                        </span>
+                        <span class="badge badge-priority-${ticket.priority}" style="font-size: 0.875rem; padding: 0.5rem 1rem;">
+                            ${ticket.priority} Priority
+                        </span>
+                        <span style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-medium);">
+                            <i data-lucide="calendar" style="width: 16px; height: 16px;"></i>
+                            Created: ${new Date(ticket.createdAt).toLocaleString()}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Live Tracking -->
+                <div class="card" style="margin-bottom: 1.5rem; border: 2px solid var(--primary); background: #f8fafc; border-radius: 12px; transform: translateY(0); transition: all 0.3s ease;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                            <i data-lucide="radio" style="width: 18px; height: 18px;" class="pulse"></i> 
+                            Live Tracking
+                        </h3>
+                        <span style="font-weight: 800; color: var(--primary); border: 2px solid rgba(30,64,175,0.2); padding: 4px 12px; border-radius: 20px;">
+                            ${progressPct}% Resolved
+                        </span>
+                    </div>
+                    
+                    <div style="width: 100%; background: #e2e8f0; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 0.75rem;">
+                        <div style="width: ${progressPct}%; background: linear-gradient(90deg, var(--primary), #3b82f6); height: 100%; border-radius: 5px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+                    </div>
+                    <div style="font-size: 0.9375rem; color: var(--text-medium); font-weight: 500;">
+                        Current Activity: <strong style="color: var(--text-dark);">${progressText}</strong>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <h3 style="font-weight: 700; margin-bottom: 1rem;">Issue Description</h3>
+                    <p style="color: var(--text-dark); line-height: 1.7; white-space: pre-wrap; background: var(--bg-light); padding: 1.5rem; border-radius: 8px;">${ticket.description}</p>
+                    
+                    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+                        <textarea id="full-ticket-update-text" class="form-textarea" placeholder="Add a secure update note..." style="margin-bottom: 0.75rem; background: var(--bg-white);"></textarea>
+                        <button class="btn btn-primary" onclick="postTicketUpdate('${ticket._id}', true)">
+                            <i data-lucide="send" style="width: 16px; height: 16px;"></i>
+                            Post Update
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div>
+                <!-- Ticket Info -->
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <h3 style="font-weight: 700; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">Ticket Information</h3>
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <div style="display: flex; gap: 1rem; align-items: center; background: var(--bg-light); padding: 0.75rem; border-radius: 8px;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.25rem;">
+                                ${ticket.createdBy.charAt(0)}
+                            </div>
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--text-medium); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Creator</div>
+                                <div style="font-weight: 700; color: var(--text-dark);">${ticket.createdBy}</div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div style="font-size: 0.8125rem; color: var(--text-medium); margin-bottom: 0.25rem;">Category</div>
+                            <div style="font-weight: 600; text-transform: capitalize; color: var(--text-dark);"><span style="background: var(--bg-light); padding: 4px 8px; border-radius: 4px;">${ticket.category}</span></div>
+                        </div>
+                        
+                        <div>
+                            <div style="font-size: 0.8125rem; color: var(--text-medium); margin-bottom: 0.25rem;">Assigned Team</div>
+                            <div style="font-weight: 600; color: var(--primary);">
+                                <i data-lucide="users" style="width: 14px; height: 14px; display: inline; vertical-align: text-bottom;"></i>
+                                ${ticket.assignedTeam ? ticket.assignedTeam.name : 'Unassigned'}
+                            </div>
+                        </div>
+
+                        ${privilegedActions}
+                        
+                        <div style="margin-top: 0.5rem;">
+                            <div style="font-size: 0.8125rem; color: var(--text-medium); margin-bottom: 0.25rem;">SLA Deadline</div>
+                            <div style="font-weight: 600; color: var(--warning); background: #fef3c7; padding: 4px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
+                                <i data-lucide="clock" style="width: 14px; height: 14px;"></i>
+                                Standard SLA Active
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline -->
+                <div class="timeline">
+                    <h3 style="font-weight: 700; margin-bottom: 1.5rem;">Activity Timeline</h3>
+                    ${ticket.history && ticket.history.length > 0 ? 
+                        ticket.history.map(h => `
+                        <div class="timeline-item">
+                            <div class="timeline-content">
+                                <div class="timeline-title">${h.action}</div>
+                                <div class="timeline-text">${h.details}</div>
+                                <div class="timeline-time">${new Date(h.timestamp).toLocaleString()} by ${h.userName}</div>
+                            </div>
+                        </div>`).join("")
+                        : '<p style="color:var(--text-medium);">No history events yet.</p>'
+                    }
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Re-initialize icons inside dynamically added DOM
+    lucide.createIcons();
+
+    navigateTo('ticket-details');
+}
+
+async function assignTicketToTeam(ticketId, teamId) {
+    if (!teamId) return;
+    try {
+        const res = await fetch(`${API_URL}/${ticketId}/assign`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${TOKEN}`
+            },
+            body: JSON.stringify({ teamId })
+        });
+        
+        if (res.ok) {
+            // alert('Team assigned successfully');
+            loadAllTickets();
+            loadTickets();
+        } else {
+            alert('Failed to assign team');
+        }
+    } catch (err) {
+        console.error('Error assigning team:', err);
+    }
+}
+
+async function updateTicketStatus(ticketId, newStatus) {
+    try {
+        const res = await fetch(`${API_URL}/${ticketId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${TOKEN}`
+            },
+            body: JSON.stringify({ status: newStatus })
+        });
+        
+        if (res.ok) {
+            // alert('Ticket status updated successfully to ' + newStatus);
+            loadAllTickets();
+            loadTickets();
+        } else {
+            alert('Failed to update ticket status');
+        }
+    } catch (err) {
+        console.error('Error updating status:', err);
+        alert('Network error while updating ticket status');
+    }
+}
+
+/* ===============================
+   LOGOUT FUNCTION
+=================================*/
+function logout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  window.location.href = "login.html";
+}
+
+/* ===============================
+   AI TICKET CREATION (GEMINI-POWERED)
+=================================*/
+async function generateAITicket() {
+    const promptEl = document.getElementById("aiPromptInput");
+    const prompt = promptEl.value.trim();
+    const btn = document.getElementById("btnGenerateAI");
+    
+    if (!prompt) {
+        alert("Please enter a description for AI to analyze.");
+        return;
+    }
+
+    btn.innerHTML = `<i data-lucide="loader" style="width:16px;height:16px;" class="spin"></i> AI Analyzing...`;
+    btn.disabled = true;
+    
+    try {
+        const res = await fetch('/api/gemini/categorize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ description: prompt })
+        });
+
+        let result;
+        if (res.ok) {
+            result = await res.json();
+        } else {
+            // Fallback to keyword-based categorization
+            result = keywordFallback(prompt);
+        }
+
+        const category = result.category || 'other';
+        const priority = result.priority || 'medium';
+        const title = result.title || 'IT Support Request';
+        const summary = result.summary || prompt;
+
+        // Auto-fill the manual form fields
+        const inputs = document.querySelectorAll("#create-ticket input.form-input");
+        if(inputs.length > 0) inputs[0].value = `[AI] ${title}`;
+        
+        const selects = document.querySelectorAll("#create-ticket select");
+        if(selects.length > 1) {
+            selects[0].value = category;
+            selects[1].value = priority;
+        }
+        
+        const textarea = document.querySelector("#create-ticket textarea");
+        if(textarea) {
+            textarea.value = `[AI GENERATED TICKET - Powered by Gemini AI]\n\nUser Context:\n"${promptEl.value}"\n\nAI Analysis:\n${summary}\n\nAutomated Categorization:\n- Category: ${category.toUpperCase()}\n- Priority: ${priority.toUpperCase()}`;
+        }
+
+        btn.innerHTML = `Auto-Fill`;
+        btn.disabled = false;
+        alert("\u2705 Gemini AI has analyzed your issue and populated the ticket! Review and submit.");
+    } catch (err) {
+        console.error('AI categorize error:', err);
+        // Fallback to keyword-based
+        const result = keywordFallback(prompt);
+        const inputs = document.querySelectorAll("#create-ticket input.form-input");
+        if(inputs.length > 0) inputs[0].value = `[AI] ${result.title}`;
+        const selects = document.querySelectorAll("#create-ticket select");
+        if(selects.length > 1) {
+            selects[0].value = result.category;
+            selects[1].value = result.priority;
+        }
+        const textarea = document.querySelector("#create-ticket textarea");
+        if(textarea) {
+            textarea.value = `[AI GENERATED TICKET]\n\nUser Context:\n"${promptEl.value}"\n\nAutomated Categorization:\n- Category: ${result.category.toUpperCase()}\n- Priority: ${result.priority.toUpperCase()}`;
+        }
+        btn.innerHTML = `Auto-Fill`;
+        btn.disabled = false;
+        alert("AI has populated the ticket details! You can review and modify before submitting.");
+    }
+}
+
+function keywordFallback(prompt) {
+    const t = prompt.toLowerCase();
+    let category = 'other', priority = 'medium', title = 'IT Support Request';
+    if (/password|login|access|account/.test(t)) { category = 'access'; title = 'Access & Authentication Issue'; priority = 'high'; }
+    else if (/network|wifi|internet|vpn/.test(t)) { category = 'network'; title = 'Network Connectivity Problem'; priority = 'high'; }
+    else if (/laptop|mouse|screen|keyboard|hardware/.test(t)) { category = 'hardware'; title = 'Hardware Malfunction'; }
+    else if (/outlook|email|teams|software|crash|install/.test(t)) { category = 'software'; title = 'Software/Application Issue'; if (/email|outlook/.test(t)) category = 'email'; }
+    else if (/server|down|urgent/.test(t)) { priority = 'critical'; title = 'Critical System Error'; }
+    return { category, priority, title };
+}
+
+/* ===============================
+   CHATBOT
+=================================*/
+function toggleChatbot() {
+  document.getElementById("chatbotPanel").classList.toggle("chatbot-hidden");
+  document.getElementById("chatbotFab").classList.toggle("chatbot-fab-hidden");
+  lucide.createIcons();
+}
+
+const MINI_SYSTEM_PROMPT = `You are ARIA, a concise IT helpdesk AI assistant for POWERGRID Corporation. Give brief, helpful responses in 2-3 sentences. You help with IT issues like login problems, network issues, hardware, software, and ticket management.`;
+
+async function sendChatMessage() {
+  const input = document.getElementById("chatbotInput");
+  const text = input.value.trim();
+  if (!text) return;
+
+  addChatMessage(text, "user");
+  input.value = "";
+
+  // Show typing indicator
+  const typingDiv = document.createElement("div");
+  typingDiv.className = 'chat-message bot';
+  typingDiv.id = 'miniTyping';
+  typingDiv.innerHTML = `<div class="chat-bubble bot" style="opacity:0.7;">Thinking...</div>`;
+  document.getElementById("chatbotMessages").appendChild(typingDiv);
+
+  try {
+    const res = await fetch('/api/gemini/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: text }],
+        systemPrompt: MINI_SYSTEM_PROMPT
+      })
+    });
+
+    document.getElementById('miniTyping')?.remove();
+
+    if (res.ok) {
+      const data = await res.json();
+      addChatMessage(data.reply || 'I can help with that! Please provide more details.', 'bot');
+    } else {
+      addChatMessage('I\'m having trouble connecting. Please try the full AI Assistant page for better support!', 'bot');
+    }
+  } catch (err) {
+    document.getElementById('miniTyping')?.remove();
+    addChatMessage('Connection issue. Please check if the server is running and try again.', 'bot');
+  }
+}
+
+async function sendQuickMessage(msg) {
+  addChatMessage(msg, "user");
+
+  const typingDiv = document.createElement("div");
+  typingDiv.className = 'chat-message bot';
+  typingDiv.id = 'miniTyping';
+  typingDiv.innerHTML = `<div class="chat-bubble bot" style="opacity:0.7;">Thinking...</div>`;
+  document.getElementById("chatbotMessages").appendChild(typingDiv);
+
+  try {
+    const res = await fetch('/api/gemini/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: msg }],
+        systemPrompt: MINI_SYSTEM_PROMPT
+      })
+    });
+
+    document.getElementById('miniTyping')?.remove();
+
+    if (res.ok) {
+      const data = await res.json();
+      addChatMessage(data.reply || 'Let me help with that. Could you provide more details?', 'bot');
+    } else {
+      addChatMessage('Please try the full AI Assistant for detailed support.', 'bot');
+    }
+  } catch (err) {
+    document.getElementById('miniTyping')?.remove();
+    addChatMessage('Connection issue. Please try again.', 'bot');
+  }
+}
+
+function handleChatEnter(event) {
+  if (event.key === 'Enter') {
+    sendChatMessage();
+  }
+}
+
+function addChatMessage(msg, sender) {
+  const div = document.createElement("div");
+  div.className = `chat-message ${sender}`;
+  div.innerHTML = `
+    <div class="chat-bubble ${sender}">${msg}</div>
+  `;
+  document.getElementById("chatbotMessages").appendChild(div);
+  const messagesEl = document.getElementById("chatbotMessages");
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+/* ===============================
+   KNOWLEDGE BASE LOGIC
+=================================*/
+const kbArticles = [
+    { title: "How to Reset Your SAP Portal Password", category: "Access Management", views: "1,234", helpful: "89%", date: "Jan 15, 2025", summary: "Step-by-step guide to reset your SAP portal password using the self-service portal or by contacting IT support." },
+    { title: "Troubleshooting Slow Laptop Performance", category: "Hardware", views: "987", helpful: "76%", date: "Jan 20, 2025", summary: "Common causes and solutions for slow laptop performance including disk cleanup, malware scans, and hardware upgrades." },
+    { title: "Installing Microsoft Office Applications", category: "Software", views: "756", helpful: "92%", date: "Jan 10, 2025", summary: "Instructions for requesting and installing Microsoft Office applications on your POWERGRID workstation." },
+    { title: "WiFi Connection Issues - Quick Fixes", category: "Network", views: "1,456", helpful: "85%", date: "Jan 22, 2025", summary: "Quick troubleshooting steps for resolving common WiFi connectivity problems in POWERGRID offices." },
+    { title: "Configuring Email on Mobile Devices", category: "Software", views: "623", helpful: "88%", date: "Jan 18, 2025", summary: "Complete guide to setting up your POWERGRID email account on iOS and Android mobile devices." },
+    { title: "Requesting System Access Permissions", category: "Access Management", views: "892", helpful: "91%", date: "Jan 12, 2025", summary: "How to request access to internal systems and applications through the IT helpdesk portal." }
+];
+
+let currentKBCategory = "All";
+
+function renderKBArticles(articles) {
+    const grid = document.getElementById("kbGrid");
+    if (!grid) return;
+    grid.innerHTML = "";
+    
+    if (articles.length === 0) {
+        grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-medium);">No articles found matching your criteria.</div>`;
+        return;
+    }
+
+    articles.forEach(art => {
+        grid.innerHTML += `
+            <div class="kb-card" onclick="alert('Opening article: ${art.title}')">
+                <span class="kb-category">${art.category}</span>
+                <h3 class="kb-title">${art.title}</h3>
+                <p class="kb-summary">${art.summary}</p>
+                <div class="kb-stats">
+                    <div class="kb-stat"><i data-lucide="eye" style="width: 16px; height: 16px;"></i> ${art.views} views</div>
+                    <div class="kb-stat"><i data-lucide="thumbs-up" style="width: 16px; height: 16px;"></i> ${art.helpful} helpful</div>
+                    <div class="kb-stat"><i data-lucide="calendar" style="width: 16px; height: 16px;"></i> ${art.date}</div>
+                </div>
+            </div>
+        `;
+    });
+    lucide.createIcons();
+}
+
+function filterKB(category) {
+    if (category !== undefined) {
+        currentKBCategory = category;
+        // Update button styles
+        document.querySelectorAll('.kb-cat-btn').forEach(btn => {
+            if (btn.innerText.includes(category) || (category === 'All' && btn.innerText.includes('All'))) {
+                btn.style.background = 'var(--primary)';
+                btn.style.color = 'white';
+                btn.style.border = 'none';
+            } else {
+                btn.style.background = 'white';
+                btn.style.color = 'var(--text-dark)';
+                btn.style.border = '1px solid var(--border)';
+            }
+        });
+    }
+
+    const query = document.getElementById("kbSearchInput") ? document.getElementById("kbSearchInput").value.toLowerCase() : "";
+    
+    const filtered = kbArticles.filter(art => {
+        const matchesCategory = currentKBCategory === "All" || art.category === currentKBCategory;
+        const matchesQuery = art.title.toLowerCase().includes(query) || art.summary.toLowerCase().includes(query) || art.category.toLowerCase().includes(query);
+        return matchesCategory && matchesQuery;
+    });
+
+    renderKBArticles(filtered);
+}
+
+/* ===============================
+   TICKET SUBMISSION (PROFILE ENFORCEMENT)
+=================================*/
+function handleTicketSubmit(e) {
+    e.preventDefault();
+
+    // Re-fetch the user details locally or trigger an API call if needed. Look at localStorage.
+    const currentUser = JSON.parse(localStorage.getItem('user')) || {};
+    
+    // Check for Extended Profile features
+    const missingFields = [];
+    if (!currentUser.mobile_number) missingFields.push("Mobile Number");
+    if (!currentUser.batch && !currentUser.employee_id) missingFields.push("Employee ID/Batch");
+
+    if (missingFields.length > 0) {
+        alert("Action Required: Please complete your extended profile details (" + missingFields.join(", ") + ") before creating a ticket.");
+        window.location.href = "profile.html";
+        return false;
+    }
+
+    // Profile complete -> allow submission
+    const btn = document.querySelector("#createTicketForm .btn-primary");
+    const originalText = btn.innerHTML;
+    btn.innerHTML = `Submitting...`;
+    btn.disabled = true;
+
+    setTimeout(() => {
+        alert("Ticket mock-submitted successfully!");
+        document.getElementById('createTicketForm').reset();
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        navigateTo('dashboard');
+    }, 1500);
+
+    return false;
+}
+
+/* ===============================
+   DATA LOADERS (ADMIN & SUPPORT)
+=================================*/
+async function loadEmployees() {
+    try {
+        const res = await fetch("http://localhost:5000/api/users/employees", { headers: {"Authorization": `Bearer ${TOKEN}`} });
+        if(!res.ok) return;
+        const emps = await res.json();
+        const tbody = document.getElementById("employeeTableBody");
+        if(tbody) tbody.innerHTML = emps.map(e => `
+            <tr>
+                <td><strong>${e.name}</strong></td>
+                <td><span style="font-family:monospace; color:var(--primary);">${e.employee_id || 'N/A'}</span></td>
+                <td><span class="badge badge-status-resolved">${e.department || 'Staff'}</span></td>
+                <td>
+                    <div style="font-size:0.875rem;">${e.email}</div>
+                    <div style="font-size:0.75rem; color:var(--text-medium);">${e.mobile_number || 'N/A'}</div>
+                </td>
+                <td><button class="btn btn-outline btn-sm" onclick="alert('View Details: ${e.name}')">View</button></td>
+            </tr>
+        `).join('');
+    } catch(err) { console.error("Error loading employees", err); }
+}
+
+async function loadSupporters() {
+    try {
+        const res = await fetch("http://localhost:5000/api/users/supporters", { headers: {"Authorization": `Bearer ${TOKEN}`} });
+        if(!res.ok) return;
+        const supps = await res.json();
+        const tbody = document.getElementById("supporterTableBody");
+        if(tbody) tbody.innerHTML = supps.map(s => `
+            <tr>
+                <td><strong>${s.name}</strong></td>
+                <td><span style="font-family:monospace; color:var(--purple);">${s.employee_id || 'N/A'}</span></td>
+                <td><div style="font-size:0.875rem;">${s.email}</div></td>
+                <td><span class="badge badge-priority-high">Active</span></td>
+                <td><button class="btn btn-outline btn-sm" onclick="alert('Manage: ${s.name}')">Manage</button></td>
+            </tr>
+        `).join('');
+    } catch(err) { console.error("Error loading supporters", err); }
+}
+
+async function loadDashboardStats() {
+    try {
+        let stats;
+        const isSupport = USER.role === 'Support' || USER.role === 'IT Engineer';
+        const isAdmin = USER.role === 'Admin';
+
+        if (isSupport) {
+            // First get my team to find the ID
+            const teamRes = await fetch("http://localhost:5000/api/teams/my-team", { headers: {"Authorization": `Bearer ${TOKEN}`} });
+            if (teamRes.ok) {
+                const team = await teamRes.json();
+                const analyticsRes = await fetch(`http://localhost:5000/api/tickets/team-analytics/${team._id}`, { headers: {"Authorization": `Bearer ${TOKEN}`} });
+                if (analyticsRes.ok) {
+                    const teamStats = await analyticsRes.json();
+                    // Map team stats to the format expected by the dashboard
+                    stats = {
+                        totalTickets: teamStats.total && teamStats.total[0] ? teamStats.total[0].count : 0,
+                        statusCounts: teamStats.statusCounts || []
+                    };
+                }
+            }
+        } else if (isAdmin) {
+            const res = await fetch("http://localhost:5000/api/tickets/analytics", { headers: {"Authorization": `Bearer ${TOKEN}`} });
+            if (res.ok) stats = await res.json();
+        }
+
+        if (!stats) return;
+        
+        let resolvedCount = 0;
+        stats.statusCounts.forEach(s => {
+            if(s._id === "Resolved") resolvedCount = s.count;
+        });
+
+        const totalEl = document.getElementById("dashTotalTickets");
+        const resEl = document.getElementById("dashResolvedTickets");
+        
+        if(totalEl) totalEl.textContent = stats.totalTickets || 0;
+        if(resEl) resEl.textContent = resolvedCount;
+
+        // Mock calculated stats for now
+        const avgResEl = document.getElementById("dashAvgRes");
+        const slaEl = document.getElementById("dashSla");
+        if(avgResEl) avgResEl.textContent = "2.4h";
+        if(slaEl) slaEl.textContent = "98.2%";
+
+    } catch(err) { console.error("Error loading stats", err); }
+}
+
+/* ===============================
+   INIT (SINGLE HANDLER)
+=================================*/
+document.addEventListener("DOMContentLoaded", () => {
+  // Load tickets
+  loadTickets();
+  if (USER && (USER.role === 'Admin' || USER.role === 'Support' || USER.role === 'IT Engineer')) {
+      loadAllTickets();
+      if(USER.role === 'Admin' || USER.role === 'Support') loadDashboardStats();
+  }
+  if (USER && USER.role === 'Admin') {
+      loadEmployees();
+      loadSupporters();
+  }
+
+  // Load KB Articles
+  renderKBArticles(kbArticles);
+
+  // Set welcome text
+  const welcomeText = document.getElementById("welcomeText");
+  if (welcomeText && USER && USER.name) {
+    let roleBadge = '';
+    if (USER.role === 'Admin') roleBadge = '<span class="badge" style="background:var(--danger); color:white; margin-right:8px; font-size:0.75rem;">Admin</span>';
+    else if (USER.role === 'Support' || USER.role === 'IT Engineer') roleBadge = '<span class="badge" style="background:var(--primary); color:white; margin-right:8px; font-size:0.75rem;">Support</span>';
+    welcomeText.innerHTML = `${roleBadge}Welcome back, <strong>${USER.name}</strong>! Here's your IT helpdesk summary for today.`;
+  }
+
+  // Generate avatar initials
+  const avatar = document.getElementById("userAvatar");
+  if (avatar && USER && USER.name) {
+    const nameParts = USER.name.trim().split(" ");
+    let initials = nameParts[0][0];
+    if (nameParts.length > 1) {
+      initials += nameParts[1][0];
+    }
+    avatar.textContent = initials.toUpperCase();
+    avatar.setAttribute("title", USER.name);
+  }
+
+  // Live WebSocket Integration
+  if (typeof io !== "undefined") {
+    const socket = io("http://localhost:5000");
+
+    socket.on("connect", () => console.log("Live Tracking Connected"));
+
+    const refreshTickets = () => {
+      loadTickets();
+      if (USER && (USER.role === 'Admin' || USER.role === 'IT Engineer')) {
+        loadAllTickets();
+      }
+    };
+
+    socket.on("ticketCreated", refreshTickets);
+    socket.on("ticketUpdated", refreshTickets);
+    socket.on("ticketAssigned", refreshTickets);
+  }
+});
+</script>
+
+    
+    <!-- Global Team Photo Modal -->
+    <script>
+    function initTeamModal() {
+        if(document.getElementById('teamPhotoModal')) return;
+        const modalHtml = `
+          <div id="teamPhotoModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center; opacity:0; transition: opacity 0.3s ease;">
+              <div style="position:relative; max-width:90%; max-height:90%; text-align:center;">
+                  <button onclick="document.getElementById('teamPhotoModal').style.opacity='0'; setTimeout(()=>document.getElementById('teamPhotoModal').style.display='none', 300)" style="position:absolute; top:-40px; right:0; background:none; border:none; color:white; font-size:2.5rem; cursor:pointer; line-height:1;">&times;</button>
+                  <img src="assets/teamphoto.png" alt="Team Info" style="max-width:100%; max-height:90vh; border-radius:12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);">
+              </div>
+          </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        const logos = document.querySelectorAll('.logo-section, .logo-container, .logo-icon, [data-lucide="zap"]');
+        logos.forEach(logo => {
+            logo.style.cursor = 'pointer';
+            logo.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const modal = document.getElementById('teamPhotoModal');
+                if(modal) {
+                    modal.style.display = 'flex';
+                    setTimeout(() => modal.style.opacity = '1', 10);
+                }
+            }, true);
+        });
+    }
+    document.addEventListener('DOMContentLoaded', initTeamModal);
+
+/* ===============================
+   INLINE DETAILS & UPDATES
+=================================*/
+function toggleTicketDetails(ticketId) {
+    const el = document.getElementById("ticket-details-" + ticketId);
+    if (el) {
+        el.style.display = el.style.display === "none" ? "block" : "none";
+    }
+}
+
+async function postTicketUpdate(ticketId, fromFullPage) {
+    const textEl = fromFullPage 
+        ? document.getElementById("full-ticket-update-text")
+        : document.getElementById("ticket-update-text-" + ticketId);
+        
+    if (!textEl || !textEl.value.trim()) {
+        alert("Please enter an update message.");
+        return;
+    }
+    try {
+        const res = await fetch(API_URL + "/" + ticketId + "/history", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${TOKEN}`
+            },
+            body: JSON.stringify({ message: textEl.value.trim() })
+        });
+        if (res.ok) {
+            textEl.value = "";
+            await loadAllTickets(); 
+            await loadTickets();
+            
+            if (fromFullPage) {
+                // If on full page view, re-render it
+                showTicketDetails(ticketId, USER.role === 'Admin' || USER.role === 'Support');
+            } else {
+                // Keep expanded if inline
+                setTimeout(() => {
+                    const el = document.getElementById("ticket-details-" + ticketId);
+                    if (el) el.style.display = "block";
+                }, 100);
+            }
+        } else {
+            const data = await res.json();
+            alert("Failed to post update: " + data.message);
+        }
+    } catch(err) {
+        alert("Network error. Could not post update.");
+    }
+}
+    </script>
+</body>
+</html>

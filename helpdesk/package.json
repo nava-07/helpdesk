@@ -1,0 +1,13 @@
+{
+  "name": "enterprise-helpdesk",
+  "version": "1.0.0",
+  "description": "Enterprise Ticket Management System",
+  "scripts": {
+    "start": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "backend": "cd backend && node server.js",
+    "frontend": "cd frontend && python -m http.server 3000"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.0"
+  }
+}

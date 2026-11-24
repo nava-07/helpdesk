@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Management - POWERGRID AI Helpdesk</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <link rel="stylesheet" href="assets/team-management.css">
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+    <i data-lucide="check-circle" style="width:20px;height:20px;"></i>
+    <span id="toast-text">Saved!</span>
+</div>
+
+<!-- HEADER -->
+<header class="header">
+    <div class="header-content">
+        <div class="logo-section">
+            <div class="logo-icon"><i data-lucide="users" style="width:28px;height:28px;color:white;"></i></div>
+            <div class="logo-text">
+                <h1 id="pageMainTitle">Team Management</h1>
+                <p id="pageMainSub">POWERGRID AI Helpdesk</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="btn btn-outline" onclick="window.location.href='index.html'">
+                <i data-lucide="arrow-left" style="width:18px;height:18px;"></i> Dashboard
+            </button>
+            <div class="user-avatar" id="userAvatar" title="User"></div>
+        </div>
+    </div>
+</header>
+
+<!-- MAIN CONTAINER -->
+<div class="container">
+    <div class="page-header">
+        <div>
+            <h2 class="page-title" id="pageTitle">Team Operations Center</h2>
+            <p class="page-subtitle" id="pageSubtitle">Manage teams, assign members, and track performance</p>
+        </div>
+        <div id="adminActions" style="display:flex;gap:0.75rem;">
+            <button class="btn btn-primary" onclick="openModal('createTeamModal')">
+                <i data-lucide="plus" style="width:18px;height:18px;"></i> Create Team
+            </button>
+        </div>
+    </div>
+
+    <!-- STATS ROW -->
+    <div class="stats-row" id="statsRow"></div>
+
+    <!-- TABS -->
+    <div class="tabs" id="mainTabs">
+        <button class="tab active" data-tab="overview" onclick="switchTab('overview',this)">
+            <i data-lucide="layout-dashboard" style="width:17px;height:17px;"></i> Overview
+        </button>
+        <button class="tab" data-tab="teams" onclick="switchTab('teams',this)">
+            <i data-lucide="layers" style="width:17px;height:17px;"></i> Teams
+        </button>
+        <button class="tab" data-tab="tickets" onclick="switchTab('tickets',this)">
+            <i data-lucide="ticket" style="width:17px;height:17px;"></i> Team Tickets
+        </button>
+        <button class="tab" data-tab="members" onclick="switchTab('members',this)">
+            <i data-lucide="user" style="width:17px;height:17px;"></i> All Members
+        </button>
+    </div>
+
+    <!-- SECTION: Overview / Analytics -->
+    <div id="overview" class="section active">
+        <div class="analytics-grid" id="analyticsGrid"></div>
+        <div class="card" style="margin-top:1.5rem;">
+            <div class="card-header">
+                <h3 class="card-title"><i data-lucide="bar-chart-2" style="width:20px;height:20px;"></i> Team Performance</h3>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Team</th><th>Members</th><th>Total</th><th>Open</th><th>In Progress</th><th>Resolved</th><th>Completion</th></tr></thead>
+                    <tbody id="perfTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION: Teams -->
+    <div id="teams" class="section">
+        <div id="teamsContainer"></div>
+    </div>
+
+    <!-- SECTION: Team Tickets -->
+    <div id="tickets" class="section">
+        <div class="toolbar">
+            <div class="search-wrapper">
+                <i data-lucide="search" class="search-icon" style="width:18px;height:18px;"></i>
+                <input type="text" class="search-input" id="ticketSearch" placeholder="Search tickets..." oninput="filterTickets()">
+            </div>
+            <select class="filter-select" id="ticketTeamFilter" onchange="filterTickets()"><option value="">All Teams</option></select>
+            <select class="filter-select" id="ticketStatusFilter" onchange="filterTickets()">
+                <option value="">All Status</option>
+                <option>Open</option><option>Pending</option><option>In Progress</option><option>Resolved</option><option>Closed</option>
+            </select>
+        </div>
+        <div id="ticketsContainer"></div>
+    </div>
+
+    <!-- SECTION: All Members -->
+    <div id="members" class="section">
+        <div class="toolbar">
+            <div class="search-wrapper">
+                <i data-lucide="search" class="search-icon" style="width:18px;height:18px;"></i>
+                <input type="text" class="search-input" id="memberSearch" placeholder="Search members..." oninput="filterMembers()">
+            </div>
+            <select class="filter-select" id="memberTeamFilter" onchange="filterMembers()"><option value="">All Teams</option></select>
+        </div>
+        <div class="team-grid" id="membersGrid"></div>
+    </div>
+
+    <!-- HANDLER SECTION: My Team (hidden for admin) -->
+    <div id="handlerView" class="section" style="display:none;">
+        <div class="handler-grid" id="handlerGrid"></div>
+    </div>
+</div>
+
+<!-- MODAL: Create Team -->
+<div class="modal-overlay" id="createTeamModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Create New Team</h3>
+            <button class="modal-close" onclick="closeModal('createTeamModal')"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">Team Name *</label>
+                <input type="text" id="teamName" class="form-input" placeholder="e.g. Network Support">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <input type="text" id="teamDesc" class="form-input" placeholder="What does this team handle?">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Category Focus</label>
+                <div id="categoryCheckboxes" style="display:flex;flex-wrap:wrap;gap:0.5rem;"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('createTeamModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="createTeam()"><i data-lucide="plus" style="width:16px;height:16px;"></i> Create</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Add Member to Team -->
+<div class="modal-overlay" id="addMemberModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Add Member to Team</h3>
+            <button class="modal-close" onclick="closeModal('addMemberModal')"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="addMemberTeamId">
+            <div class="form-group">
+                <label class="form-label">Select Member</label>
+                <select id="addMemberSelect" class="form-select"></select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('addMemberModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="addMemberToTeam()"><i data-lucide="user-plus" style="width:16px;height:16px;"></i> Add</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Assign Ticket to Team -->
+<div class="modal-overlay" id="assignTicketModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Assign Ticket to Team</h3>
+            <button class="modal-close" onclick="closeModal('assignTicketModal')"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="assignTicketId">
+            <p id="assignTicketTitle" style="font-weight:600;margin-bottom:1rem;"></p>
+            <div class="form-group">
+                <label class="form-label">Select Team</label>
+                <select id="assignTeamSelect" class="form-select"></select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('assignTicketModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="assignTicketToTeam()"><i data-lucide="send" style="width:16px;height:16px;"></i> Assign</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Update Ticket Status -->
+<div class="modal-overlay" id="statusModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Update Ticket Status</h3>
+            <button class="modal-close" onclick="closeModal('statusModal')"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="statusTicketId">
+            <p id="statusTicketTitle" style="font-weight:600;margin-bottom:1rem;"></p>
+            <div class="form-group">
+                <label class="form-label">New Status</label>
+                <select id="statusSelect" class="form-select">
+                    <option>Open</option><option>In Progress</option><option>Resolved</option><option>Completed</option><option>Closed</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('statusModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="updateTicketStatus()"><i data-lucide="check" style="width:16px;height:16px;"></i> Update</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Team Detail Drill-Down -->
+<div class="modal-overlay" id="teamDetailModal">
+    <div class="modal" style="max-width:700px;">
+        <div class="modal-header">
+            <h3 class="modal-title" id="teamDetailTitle">Team Details</h3>
+            <button class="modal-close" onclick="closeModal('teamDetailModal')"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+        </div>
+        <div class="modal-body" id="teamDetailBody"></div>
+    </div>
+</div>
+
+<script src="assets/team-management.js"></script>
+</body>
+</html>

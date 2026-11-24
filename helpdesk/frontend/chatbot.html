@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ARIA – AI Assistant | POWERGRID IT Helpdesk</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* ══ VARIABLES ══════════════════════════════════ */
+    :root {
+      --primary:      #1e40af;
+      --primary-d:    #1e3a8a;
+      --secondary:    #0891b2;
+      --success:      #059669;
+      --danger:       #dc2626;
+      --warning:      #d97706;
+      --purple:       #7c3aed;
+      --text-dark:    #0f172a;
+      --text-med:     #475569;
+      --text-light:   #94a3b8;
+      --border:       #e2e8f0;
+      --bg:           #f0f7ff;
+      --white:        #ffffff;
+      --bot-bubble:   #eff6ff;
+      --shadow:       0 4px 20px rgba(15,23,42,.10);
+      --shadow-lg:    0 8px 36px rgba(15,23,42,.15);
+    }
+
+    *{ margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      font-family: 'IBM Plex Sans', sans-serif;
+      background: linear-gradient(135deg, #f0f7ff 0%, #dbeafe 50%, #f8fafc 100%);
+      min-height: 100vh;
+      color: var(--text-dark);
+      overflow-y: auto;
+    }
+
+    /* ══ HEADER ═════════════════════════════════════ */
+    .header {
+      background: var(--white);
+      border-bottom: 2px solid var(--border);
+      padding: .875rem 2rem;
+      position: sticky; top: 0; z-index: 200;
+      box-shadow: 0 2px 8px rgba(15,23,42,.06);
+    }
+    .header-inner {
+      max-width: 1360px; margin: 0 auto;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .brand { display:flex; align-items:center; gap:.875rem; }
+    .brand-logo {
+      width:46px; height:46px; border-radius:12px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display:flex; align-items:center; justify-content:center;
+      box-shadow: 0 4px 14px rgba(30,64,175,.35);
+      position: relative; overflow: hidden;
+    }
+    .brand-logo::after {
+      content:''; position:absolute; top:-50%; left:-50%;
+      width:200%; height:200%;
+      background: radial-gradient(circle, rgba(255,255,255,.2) 0%, transparent 60%);
+      animation: shimmer 4s infinite;
+    }
+    @keyframes shimmer { 0%,100%{opacity:.4;} 50%{opacity:.15;} }
+    .brand h1 { font-size:1.375rem; font-weight:700; }
+    .brand p  { font-size:.8rem; color:var(--text-med); }
+
+    .header-right { display:flex; align-items:center; gap:.75rem; }
+    .live-badge {
+      display:flex; align-items:center; gap:.4rem;
+      font-size:.8125rem; font-weight:700; color:var(--success);
+    }
+    .live-dot {
+      width:8px; height:8px; background:var(--success);
+      border-radius:50%; animation: blink 1.6s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.25;} }
+
+    .btn {
+      padding:.6rem 1.2rem; border:none; border-radius:8px;
+      font-family:'IBM Plex Sans',sans-serif; font-size:.875rem; font-weight:600;
+      cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:.5rem;
+    }
+    .btn-outline { background:var(--white); border:1.5px solid var(--border); color:var(--text-dark); }
+    .btn-outline:hover { border-color:var(--primary); color:var(--primary); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color:white; box-shadow:0 2px 8px rgba(30,64,175,.25);
+    }
+    .btn-primary:hover { transform:translateY(-1px); box-shadow:0 5px 16px rgba(30,64,175,.35); }
+    .btn-sm { padding:.45rem .9rem; font-size:.8125rem; }
+
+    .avatar {
+      width:38px; height:38px; border-radius:50%;
+      background: linear-gradient(135deg, #64748b, #475569);
+      display:flex; align-items:center; justify-content:center;
+      color:white; font-weight:700; font-size:.8rem;
+    }
+
+    /* ══ LAYOUT ══════════════════════════════════════ */
+    .layout {
+      max-width: 1360px; margin: 1.5rem auto;
+      padding: 0 2rem;
+      display: grid;
+      grid-template-columns: 270px 1fr 300px;
+      gap: 1.5rem;
+      height: calc(100vh - 88px);
+    }
+
+    /* ══ SIDE PANEL (shared) ═════════════════════════ */
+    .side-col { display:flex; flex-direction:column; gap:1rem; overflow-y:auto; }
+    .side-col::-webkit-scrollbar { width:3px; }
+    .side-col::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+
+    .panel {
+      background:var(--white); border:1.5px solid var(--border);
+      border-radius:14px; padding:1.25rem;
+    }
+    .panel-head {
+      font-size:.75rem; font-weight:700; text-transform:uppercase;
+      letter-spacing:.07em; color:var(--text-light);
+      margin-bottom:1rem; display:flex; align-items:center; gap:.4rem;
+    }
+
+    /* Quick actions */
+    .qa-btn {
+      width:100%; padding:.7rem .875rem; margin-bottom:.5rem;
+      border:1.5px solid var(--border); border-radius:10px;
+      background:var(--bg); font-family:'IBM Plex Sans',sans-serif;
+      font-size:.875rem; font-weight:600; color:var(--text-dark);
+      cursor:pointer; transition:all .2s;
+      display:flex; align-items:center; gap:.75rem; text-align:left;
+    }
+    .qa-btn:last-child { margin-bottom:0; }
+    .qa-btn:hover { background:var(--white); border-color:var(--primary); color:var(--primary); transform:translateX(3px); }
+    .qa-icon {
+      width:30px; height:30px; border-radius:8px; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+    }
+
+    /* Session history */
+    .hist-item {
+      padding:.6rem .75rem; border-radius:8px; cursor:pointer;
+      transition:background .2s; margin-bottom:.2rem;
+    }
+    .hist-item:hover  { background:var(--bg); }
+    .hist-item.active { background:#dbeafe; }
+    .hist-item.active .hi-name { color:var(--primary); }
+    .hi-name { font-size:.875rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .hi-time { font-size:.72rem; color:var(--text-light); margin-top:.1rem; }
+
+    /* Mini stats */
+    .mini-grid { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; }
+    .mini-box  { background:var(--bg); border-radius:8px; padding:.75rem; text-align:center; }
+    .mini-val  { font-size:1.25rem; font-weight:700; color:var(--primary); }
+    .mini-lbl  { font-size:.7rem; font-weight:600; color:var(--text-med); margin-top:.1rem; }
+
+    /* ══ CHAT WINDOW ═════════════════════════════════ */
+    .chat-window {
+      display:flex; flex-direction:column;
+      background:var(--white); border:1.5px solid var(--border);
+      border-radius:16px; overflow:hidden;
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* Chat header */
+    .chat-top {
+      padding:1.125rem 1.5rem;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      display:flex; justify-content:space-between; align-items:center;
+      position:relative; overflow:hidden;
+    }
+    .chat-top::before {
+      content:''; position:absolute; top:-60%; right:-5%;
+      width:280px; height:280px; border-radius:50%;
+      background: radial-gradient(circle, rgba(255,255,255,.12), transparent 70%);
+    }
+    .chat-top-left { display:flex; align-items:center; gap:.875rem; position:relative; z-index:1; }
+    .bot-icon {
+      width:44px; height:44px; border-radius:12px;
+      background:rgba(255,255,255,.22); backdrop-filter:blur(10px);
+      border:2px solid rgba(255,255,255,.35);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .bot-name   { color:white; font-size:1.0625rem; font-weight:700; }
+    .bot-status { color:rgba(255,255,255,.85); font-size:.8rem; display:flex; align-items:center; gap:.35rem; margin-top:.15rem; }
+    .chat-top-right { display:flex; gap:.5rem; position:relative; z-index:1; }
+    .top-btn {
+      width:34px; height:34px; border-radius:8px;
+      background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.25);
+      color:white; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; transition:all .2s;
+    }
+    .top-btn:hover { background:rgba(255,255,255,.3); }
+
+    /* Messages feed */
+    .feed {
+      flex:1; overflow-y:auto; padding:1.5rem;
+      display:flex; flex-direction:column; gap:1.25rem;
+      scroll-behavior:smooth;
+    }
+    .feed::-webkit-scrollbar { width:4px; }
+    .feed::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+
+    /* Message groups */
+    .grp { display:flex; gap:.75rem; animation:popIn .3s ease; }
+    .grp.user { flex-direction:row-reverse; }
+    @keyframes popIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
+
+    .grp-av {
+      width:33px; height:33px; border-radius:10px; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:.72rem; font-weight:700; color:white; align-self:flex-end;
+    }
+    .grp-av.bot { background:linear-gradient(135deg,var(--primary),var(--secondary)); }
+    .grp-av.usr { background:linear-gradient(135deg,#64748b,#475569); }
+
+    .grp-body { max-width:74%; display:flex; flex-direction:column; gap:.3rem; }
+    .grp.user .grp-body { align-items:flex-end; }
+
+    .bubble {
+      padding:.875rem 1.125rem; border-radius:14px;
+      font-size:.9375rem; line-height:1.7; position:relative;
+    }
+    .bot .bubble {
+      background:var(--bot-bubble); border:1px solid #bfdbfe;
+      border-bottom-left-radius:4px; color:var(--text-dark);
+    }
+    .user .bubble {
+      background:linear-gradient(135deg,var(--primary),var(--secondary));
+      color:white; border-bottom-right-radius:4px;
+    }
+    .bubble strong { font-weight:700; }
+    .bubble ul { padding-left:1.2rem; margin:.35rem 0; }
+    .bubble li  { margin:.2rem 0; }
+    .bubble code {
+      font-family:'JetBrains Mono',monospace; font-size:.8125rem;
+      background:rgba(30,64,175,.08); padding:.1rem .4rem; border-radius:4px;
+    }
+    .msg-time { font-size:.68rem; color:var(--text-light); padding:0 .2rem; }
+
+    /* Quick reply chips */
+    .chips { display:flex; flex-wrap:wrap; gap:.45rem; margin-top:.2rem; }
+    .chip {
+      padding:.4rem .875rem; border:1.5px solid #93c5fd; border-radius:20px;
+      background:white; font-family:'IBM Plex Sans',sans-serif;
+      font-size:.8rem; font-weight:600; color:var(--primary);
+      cursor:pointer; transition:all .2s;
+    }
+    .chip:hover { background:var(--primary); color:white; border-color:var(--primary); transform:translateY(-1px); }
+
+    /* Ticket form embedded */
+    .tkt-form {
+      background:white; border:1.5px solid #93c5fd; border-radius:12px;
+      padding:1.125rem; margin-top:.35rem;
+    }
+    .tkt-form h4 { font-size:.9375rem; font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:.5rem; }
+    .f-row { display:grid; grid-template-columns:1fr 1fr; gap:.625rem; margin-bottom:.75rem; }
+    .f-group { margin-bottom:.75rem; }
+    .f-label { font-size:.78rem; font-weight:700; color:var(--text-med); margin-bottom:.3rem; display:block; }
+    .f-input, .f-select, .f-textarea {
+      width:100%; padding:.6rem .875rem; border:1.5px solid var(--border);
+      border-radius:8px; font-family:'IBM Plex Sans',sans-serif; font-size:.875rem;
+      transition:all .2s;
+    }
+    .f-input:focus,.f-select:focus,.f-textarea:focus {
+      outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(30,64,175,.1);
+    }
+    .f-textarea { resize:vertical; min-height:65px; }
+    .f-actions { display:flex; gap:.625rem; margin-top:.875rem; }
+    .f-submit {
+      flex:1; padding:.65rem; border:none; border-radius:8px;
+      background:linear-gradient(135deg,var(--primary),var(--secondary)); color:white;
+      font-family:'IBM Plex Sans',sans-serif; font-weight:700; font-size:.875rem;
+      cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:center; gap:.4rem;
+    }
+    .f-submit:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(30,64,175,.3); }
+    .f-cancel {
+      padding:.65rem 1rem; border:1.5px solid var(--border); border-radius:8px;
+      background:white; font-family:'IBM Plex Sans',sans-serif;
+      font-weight:600; font-size:.875rem; cursor:pointer; color:var(--text-med); transition:all .2s;
+    }
+    .f-cancel:hover { border-color:var(--danger); color:var(--danger); }
+
+    /* KB card inline */
+    .kb-inline {
+      background:white; border:1.5px solid #bfdbfe; border-radius:10px;
+      padding:.875rem 1rem; margin-top:.25rem; cursor:pointer; transition:all .2s;
+    }
+    .kb-inline:hover { border-color:var(--primary); transform:translateY(-1px); box-shadow:0 2px 8px rgba(30,64,175,.1); }
+    .kb-tag  { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--secondary); margin-bottom:.25rem; }
+    .kb-ttl  { font-weight:700; font-size:.875rem; }
+    .kb-sub  { font-size:.8rem; color:var(--text-med); margin-top:.15rem; }
+
+    /* Typing dots */
+    .typing-grp { display:flex; gap:.75rem; }
+    .typing-bubble {
+      background:var(--bot-bubble); border:1px solid #bfdbfe;
+      padding:.875rem 1.25rem; border-radius:14px; border-bottom-left-radius:4px;
+      display:flex; align-items:center; gap:.4rem;
+    }
+    .tdot {
+      width:7px; height:7px; background:#93c5fd; border-radius:50%;
+      animation:bounce 1.2s infinite ease-in-out;
+    }
+    .tdot:nth-child(2){animation-delay:.2s;}
+    .tdot:nth-child(3){animation-delay:.4s;}
+    @keyframes bounce { 0%,80%,100%{transform:translateY(0);opacity:.5;} 40%{transform:translateY(-6px);opacity:1;} }
+
+    /* ══ INPUT BAR ═══════════════════════════════════ */
+    .input-bar {
+      padding:1rem 1.25rem; border-top:1.5px solid var(--border);
+      background:#f8fafc;
+    }
+    .input-row { display:flex; gap:.75rem; align-items:flex-end; }
+    .input-wrap { flex:1; position:relative; }
+    .chat-input {
+      width:100%; padding:.875rem 2.75rem .875rem 1rem;
+      border:2px solid var(--border); border-radius:12px;
+      font-family:'IBM Plex Sans',sans-serif; font-size:.9375rem;
+      resize:none; max-height:120px; overflow-y:auto;
+      transition:all .2s; background:white; line-height:1.5;
+    }
+    .chat-input:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(30,64,175,.1); }
+    .chat-input:disabled { opacity:.6; cursor:not-allowed; }
+    .attach-btn {
+      position:absolute; right:.75rem; bottom:.75rem;
+      background:none; border:none; cursor:pointer; color:var(--text-light); transition:color .2s;
+    }
+    .attach-btn:hover { color:var(--primary); }
+    .send-btn {
+      width:48px; height:48px; border:none; border-radius:12px; flex-shrink:0;
+      background:linear-gradient(135deg,var(--primary),var(--secondary));
+      color:white; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:all .2s; box-shadow:0 2px 8px rgba(30,64,175,.3);
+    }
+    .send-btn:hover:not(:disabled) { transform:scale(1.08); box-shadow:0 5px 16px rgba(30,64,175,.45); }
+    .send-btn:disabled { opacity:.5; cursor:default; transform:none; }
+
+    .hints { display:flex; gap:.5rem; margin-top:.625rem; flex-wrap:wrap; }
+    .hint {
+      padding:.3rem .75rem; border-radius:20px; background:white;
+      border:1.5px solid var(--border); font-size:.78rem; font-weight:600;
+      cursor:pointer; color:var(--text-med); transition:all .2s;
+    }
+    .hint:hover { border-color:var(--primary); color:var(--primary); background:#eff6ff; }
+
+    /* ══ RIGHT PANEL ═════════════════════════════════ */
+    /* Ticket preview */
+    .tkt-preview {
+      background:#eff6ff; border:1.5px solid #93c5fd; border-radius:10px;
+      padding:.875rem; margin-bottom:.75rem; cursor:pointer; transition:all .2s;
+    }
+    .tkt-preview:last-child { margin-bottom:0; }
+    .tkt-preview:hover { border-color:var(--primary); }
+    .tkt-id    { font-family:'JetBrains Mono',monospace; font-size:.72rem; color:var(--text-med); margin-bottom:.3rem; }
+    .tkt-title { font-weight:700; font-size:.875rem; margin-bottom:.5rem; }
+    .tkt-tags  { display:flex; gap:.4rem; flex-wrap:wrap; }
+    .tag {
+      display:inline-flex; align-items:center; gap:.2rem;
+      padding:.18rem .55rem; border-radius:5px;
+      font-size:.7rem; font-weight:700;
+    }
+    .t-blue   { background:#dbeafe; color:var(--primary); }
+    .t-green  { background:#d1fae5; color:var(--success); }
+    .t-orange { background:#fed7aa; color:var(--warning); }
+    .t-purple { background:#ede9fe; color:var(--purple); }
+
+    /* KB articles in right panel */
+    .kb-art {
+      padding:.875rem; border:1.5px solid var(--border); border-radius:10px;
+      cursor:pointer; transition:all .2s; margin-bottom:.625rem;
+    }
+    .kb-art:last-child { margin-bottom:0; }
+    .kb-art:hover { border-color:var(--primary); transform:translateX(3px); }
+    .kb-art-tag   { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--secondary); margin-bottom:.25rem; }
+    .kb-art-title { font-weight:700; font-size:.8375rem; line-height:1.4; }
+    .kb-art-meta  { font-size:.72rem; color:var(--text-light); margin-top:.2rem; }
+
+    /* Session info */
+    .info-row { font-size:.8rem; color:var(--text-med); margin-bottom:.3rem; }
+    .info-row strong { color:var(--text-dark); }
+
+    /* API key notice */
+    .api-notice {
+      background:#fef3c7; border:1.5px solid #fde68a; border-radius:10px;
+      padding:1rem; margin-bottom:1rem;
+    }
+    .api-notice p { font-size:.8125rem; color:#92400e; font-weight:500; }
+    .api-notice strong { color:#78350f; }
+    .api-key-input {
+      width:100%; margin-top:.625rem; padding:.6rem .875rem;
+      border:1.5px solid #fbbf24; border-radius:8px;
+      font-family:'IBM Plex Sans',sans-serif; font-size:.875rem;
+    }
+    .api-key-input:focus { outline:none; border-color:var(--warning); }
+    .api-save-btn {
+      width:100%; margin-top:.5rem; padding:.6rem; border:none; border-radius:8px;
+      background:var(--warning); color:white; font-weight:700; font-size:.875rem;
+      font-family:'IBM Plex Sans',sans-serif; cursor:pointer; transition:all .2s;
+    }
+    .api-save-btn:hover { background:#b45309; }
+
+    /* ══ RESPONSIVE ══════════════════════════════════ */
+    @media (max-width:1100px) {
+      .layout { grid-template-columns:250px 1fr; }
+      .right-col { display:none; }
+    }
+    @media (max-width:800px) {
+      .layout { grid-template-columns:1fr; height:auto; padding:0 1rem; }
+      .left-col { display:none; }
+      .chat-window { height:calc(100vh - 88px); }
+      .header { padding:1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═════════════════════ HEADER ═════════════════════ -->
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-logo">
+        <i data-lucide="zap" style="width:24px;height:24px;color:white;position:relative;z-index:1;"></i>
+      </div>
+      <div>
+        <h1>POWERGRID IT Helpdesk</h1>
+        <p>AI-Powered Smart Ticketing System</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="live-badge"><div class="live-dot"></div> AI Online</div>
+      <button class="btn btn-outline btn-sm" onclick="clearChat()">
+        <i data-lucide="plus" style="width:15px;height:15px;"></i> New Chat
+      </button>
+      <button class="btn btn-outline" onclick="window.location.href='index.html'">
+        <i data-lucide="layout-dashboard" style="width:16px;height:16px;"></i> Dashboard
+      </button>
+      <div class="avatar" id="userAvatar"></div>
+    </div>
+  </div>
+</header>
+
+<!-- ═════════════════════ LAYOUT ═════════════════════ -->
+<div class="layout">
+
+  <!-- ── LEFT SIDEBAR ───────────────────────────── -->
+  <div class="side-col left-col">
+
+    <!-- Quick Actions -->
+    <div class="panel">
+      <div class="panel-head"><i data-lucide="zap" style="width:13px;height:13px;"></i> Quick Actions</div>
+      <button class="qa-btn" onclick="sendQuick('I need to raise a new IT support ticket')">
+        <div class="qa-icon" style="background:#dbeafe;color:var(--primary);"><i data-lucide="plus-circle" style="width:17px;height:17px;"></i></div>
+        Raise a Ticket
+      </button>
+      <button class="qa-btn" onclick="sendQuick('I cannot log in to the SAP portal or my account is locked')">
+        <div class="qa-icon" style="background:#ede9fe;color:var(--purple);"><i data-lucide="lock" style="width:17px;height:17px;"></i></div>
+        Login / Access Issue
+      </button>
+      <button class="qa-btn" onclick="sendQuick('My internet connection or WiFi is not working')">
+        <div class="qa-icon" style="background:#d1fae5;color:var(--success);"><i data-lucide="wifi-off" style="width:17px;height:17px;"></i></div>
+        Network Problem
+      </button>
+      <button class="qa-btn" onclick="sendQuick('My laptop is very slow or not responding')">
+        <div class="qa-icon" style="background:#fed7aa;color:var(--warning);"><i data-lucide="monitor" style="width:17px;height:17px;"></i></div>
+        Slow Laptop / PC
+      </button>
+      <button class="qa-btn" onclick="sendQuick('I need a software installed on my computer')">
+        <div class="qa-icon" style="background:#fce7f3;color:#be185d;"><i data-lucide="package" style="width:17px;height:17px;"></i></div>
+        Software Request
+      </button>
+      <button class="qa-btn" onclick="sendQuick('Show me the top knowledge base articles for self-service IT help')">
+        <div class="qa-icon" style="background:#ccfbf1;color:#0d9488;"><i data-lucide="book-open" style="width:17px;height:17px;"></i></div>
+        Knowledge Base
+      </button>
+    </div>
+
+    <!-- AI Stats -->
+    <div class="panel">
+      <div class="panel-head"><i data-lucide="brain" style="width:13px;height:13px;"></i> AI Stats Today</div>
+      <div class="mini-grid">
+        <div class="mini-box"><div class="mini-val">52</div><div class="mini-lbl">Chats</div></div>
+        <div class="mini-box"><div class="mini-val">34</div><div class="mini-lbl">Resolved</div></div>
+        <div class="mini-box"><div class="mini-val">65%</div><div class="mini-lbl">Deflection</div></div>
+        <div class="mini-box"><div class="mini-val">4.8★</div><div class="mini-lbl">Rating</div></div>
+      </div>
+    </div>
+
+    <!-- Chat History -->
+    <div class="panel" style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+      <div class="panel-head"><i data-lucide="history" style="width:13px;height:13px;"></i> Recent Sessions</div>
+      <div style="overflow-y:auto;flex:1;">
+        <div class="hist-item active"><div class="hi-name">Current session</div><div class="hi-time">Just now</div></div>
+        <div class="hist-item"><div class="hi-name">SAP portal login issue</div><div class="hi-time">2 hours ago</div></div>
+        <div class="hist-item"><div class="hi-name">Laptop performance slow</div><div class="hi-time">Yesterday</div></div>
+        <div class="hist-item"><div class="hi-name">MS Teams installation</div><div class="hi-time">2 days ago</div></div>
+        <div class="hist-item"><div class="hi-name">Email not syncing</div><div class="hi-time">3 days ago</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CHAT WINDOW ─────────────────────────────── -->
+  <div class="chat-window">
+
+    <!-- Chat Top Bar -->
+    <div class="chat-top">
+      <div class="chat-top-left">
+        <div class="bot-icon">
+          <i data-lucide="bot" style="width:22px;height:22px;color:white;"></i>
+        </div>
+        <div>
+          <div class="bot-name">ARIA — AI Helpdesk Assistant</div>
+          <div class="bot-status"><div class="live-dot"></div> Online · Powered by Gemini AI · Avg &lt;3 sec</div>
+        </div>
+      </div>
+      <div class="chat-top-right">
+        <button class="top-btn" title="Clear chat" onclick="clearChat()">
+          <i data-lucide="refresh-cw" style="width:16px;height:16px;"></i>
+        </button>
+        <button class="top-btn" title="Rate session" onclick="rateSession()">
+          <i data-lucide="star" style="width:16px;height:16px;"></i>
+        </button>
+        <button class="top-btn" title="Export chat" onclick="exportChat()">
+          <i data-lucide="download" style="width:16px;height:16px;"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Message Feed -->
+    <div class="feed" id="feed"></div>
+
+    <!-- Input Bar -->
+    <div class="input-bar">
+      <div class="input-row">
+        <div class="input-wrap">
+          <textarea class="chat-input" id="chatInput"
+            placeholder="Describe your IT issue… (Enter to send, Shift+Enter for new line)"
+            rows="1"
+            onkeydown="handleKey(event)"
+            oninput="autoResize(this)"></textarea>
+          <button class="attach-btn" title="Attach screenshot">
+            <i data-lucide="paperclip" style="width:17px;height:17px;"></i>
+          </button>
+        </div>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Send">
+          <i data-lucide="send" style="width:19px;height:19px;"></i>
+        </button>
+      </div>
+      <div class="hints" id="hints">
+        <span class="hint" onclick="sendQuick('I cannot login to SAP')">🔐 Login issue</span>
+        <span class="hint" onclick="sendQuick('My email is not working in Outlook')">📧 Email issue</span>
+        <span class="hint" onclick="sendQuick('Need software installed')">📦 Software install</span>
+        <span class="hint" onclick="sendQuick('Reset my network password')">🔑 Reset password</span>
+        <span class="hint" onclick="sendQuick('Check status of my tickets')">🎫 My tickets</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT PANEL ─────────────────────────────── -->
+  <div class="side-col right-col">
+
+    <!-- AI Status -->
+    <div class="panel">
+      <div class="panel-head"><i data-lucide="sparkles" style="width:13px;height:13px;"></i> AI Status</div>
+      <div style="background:#d1fae5; border:1.5px solid #6ee7b7; border-radius:10px; padding:1rem;">
+        <p style="font-size:.8125rem; color:#065f46; font-weight:500;"><strong style="color:#064e3b;">✅ Gemini AI Active</strong> — Connected to Google Gemini AI for live intelligent responses.</p>
+      </div>
+    </div>
+
+    <!-- Session Info -->
+    <div class="panel">
+      <div class="panel-head"><i data-lucide="user-circle" style="width:13px;height:13px;"></i> Session Info</div>
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;">
+        <div class="avatar">RK</div>
+        <div>
+          <div style="font-weight:700;font-size:.9rem;">Rajesh Kumar</div>
+          <div style="font-size:.78rem;color:var(--text-med);">Finance · EMP-101</div>
+        </div>
+      </div>
+      <div class="info-row">Messages: <strong id="msgCount">0</strong></div>
+      <div class="info-row">Mode: <strong id="modeLabel" style="color:var(--success);">Live Gemini AI</strong></div>
+      <div class="info-row">Status: <strong style="color:var(--success);">Active</strong></div>
+    </div>
+
+    <!-- Open Tickets -->
+    <div class="panel">
+      <div class="panel-head"><i data-lucide="ticket" style="width:13px;height:13px;"></i> Your Open Tickets</div>
+      <div class="tkt-preview">
+        <div class="tkt-id">TKT-2025-001</div>
+        <div class="tkt-title">Unable to access SAP portal</div>
+        <div class="tkt-tags">
+          <span class="tag t-purple">In Progress</span>
+          <span class="tag t-orange">High</span>
+        </div>
+      </div>
+      <div class="tkt-preview">
+        <div class="tkt-id">TKT-2025-004</div>
+        <div class="tkt-title">MS Teams installation request</div>
+        <div class="tkt-tags">
+          <span class="tag t-green">Resolved</span>
+          <span class="tag t-blue">Low</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Knowledge Base -->
+    <div class="panel">
+      <div class="panel-head"><i data-lucide="book-open" style="width:13px;height:13px;"></i> Suggested Articles</div>
+      <div class="kb-art"><div class="kb-art-tag">Access</div><div class="kb-art-title">How to Reset Your SAP Password</div><div class="kb-art-meta">👁 1,234 views · 89% helpful</div></div>
+      <div class="kb-art"><div class="kb-art-tag">Network</div><div class="kb-art-title">WiFi Quick-Fix Troubleshooting</div><div class="kb-art-meta">👁 1,456 views · 85% helpful</div></div>
+      <div class="kb-art"><div class="kb-art-tag">Hardware</div><div class="kb-art-title">Speeding Up a Slow Laptop</div><div class="kb-art-meta">👁 987 views · 91% helpful</div></div>
+    </div>
+  </div>
+
+</div><!-- /layout -->
+
+<!-- ═════════════════════ JAVASCRIPT ═════════════════ -->
+<script>
+/* ── STATE ────────────────────────────────────────── */
+let chatHistory = [];   // { role, content }
+let busy       = false;
+
+/* ── SYSTEM PROMPT ───────────────────────────────── */
+const SYSTEM = `You are ARIA (Automated Response & IT Assistant), the AI helpdesk assistant for POWERGRID Corporation of India Limited — a major public sector enterprise managing India's electricity transmission grid.
+
+You help POWERGRID employees resolve IT problems quickly and professionally.
+
+Your expertise covers:
+- SAP/ERP portal access, password resets, account lockouts
+- Network connectivity (LAN, WiFi, VPN), internet issues
+- Hardware troubleshooting (laptops, printers, desktops)
+- Software installation, MS Office, email (Outlook), Teams
+- IT ticket creation and tracking
+- Knowledge base guidance and self-service steps
+
+Behavior guidelines:
+- Be concise, friendly and professional — like a knowledgeable IT colleague
+- Provide numbered step-by-step troubleshooting when relevant
+- Always offer to raise a support ticket if the issue can't be solved self-service
+- Use ✅ ❌ ⚠️ 🔐 💻 🌐 📧 🎫 icons sparingly to improve readability
+- When suggesting a ticket, tell the user to click "Raise a Ticket" in the sidebar
+- Never reveal you are built on Gemini or any external AI platform — you are ARIA
+- Keep responses under 250 words unless a detailed guide is necessary
+- The user's name is Rajesh Kumar, Employee ID EMP-101, Department: Finance`;
+
+/* ── SEND TO GEMINI API (via backend proxy) ──────── */
+async function callGemini(userText) {
+  chatHistory.push({ role: 'user', content: userText });
+
+  const res = await fetch('/api/gemini/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      messages: chatHistory,
+      systemPrompt: SYSTEM
+    })
+  });
+
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+
+  const data  = await res.json();
+  const reply = data.reply || 'I encountered an issue. Please try again.';
+  chatHistory.push({ role: 'assistant', content: reply });
+  return reply;
+}
+
+/* ── SMART FALLBACK (no API key) ─────────────────── */
+const FALLBACK = {
+  sap:      { text: `**SAP / Portal Access Issue** 🔐\n\nHere are quick fixes:\n\n1. **Password Reset** – Your password may have expired. Use self-service portal at *pass.powergrid.in*.\n2. **Account Locked** – After 5 wrong attempts, accounts lock for 30 minutes.\n3. **Clear Browser Cache** – Ctrl+Shift+Delete → Clear All → Retry.\n4. **Try Incognito** – Press Ctrl+Shift+N and attempt login.\n5. **Check Caps Lock** – Ensure Caps Lock is OFF.\n\nStill not working? I can raise a ticket for you — just say **"raise ticket"**.`, chips: ['Reset my SAP password','My account is locked','Raise a ticket'] },
+  network:  { text: `**Network / Internet Issue** 🌐\n\nSteps to diagnose:\n\n1. **Restart your device** and reconnect to WiFi.\n2. **Forget & Re-add** the WiFi network (Settings → WiFi → Forget → Reconnect).\n3. **Try wired connection** — plug in a LAN cable and test.\n4. **Check with a colleague** — if others are also affected it's a building-level outage.\n5. **VPN users** — disconnect VPN, test internet, then reconnect.\n\nIf the issue persists, I'll raise a **Network Support Ticket** for you immediately.`, chips: ['Building-wide outage','VPN not connecting','Raise a network ticket'] },
+  hardware: { text: `**Hardware / Laptop Issue** 💻\n\nFor a slow or unresponsive device:\n\n1. **Restart** your laptop — clears RAM and temp processes.\n2. **Check Task Manager** (Ctrl+Shift+Esc) for high CPU/Memory usage.\n3. **Free up disk space** — Windows needs at least 10% free space to run well.\n4. **Check for pending updates** — sometimes updates cause slowness until applied.\n5. **Disable startup apps** — Task Manager → Startup tab → Disable heavy apps.\n\nIf it's a physical hardware defect, I'll escalate to the **Hardware Support Team**.`, chips: ['My screen is blank','Laptop won\'t turn on','Raise a hardware ticket'] },
+  software: { text: `**Software / Installation Request** 📦\n\nFor software installation:\n\n1. All software installations require **IT approval** per POWERGRID policy.\n2. I can raise a **Software Request Ticket** for you right now.\n3. **Standard approved software** (MS Office, Teams, Acrobat) can be installed within 2 hours.\n4. **Third-party software** needs manager approval first (1-2 business days).\n\nFor crashes/errors in existing software:\n- Restart the application\n- Check for updates\n- Try "Repair" from Control Panel → Programs\n\nShall I raise a software request ticket?`, chips: ['Install MS Teams','Install Acrobat','Raise a software request'] },
+  email:    { text: `**Email / Outlook Issue** 📧\n\nCommon fixes:\n\n1. **Can't send/receive** → Restart Outlook. Check internet connection.\n2. **Password prompt keeps appearing** → Go to Control Panel → Credential Manager → Remove Outlook credentials → Re-login.\n3. **Inbox full** → Delete old emails or archive. Limit is 10GB per mailbox.\n4. **Attachment too large** → Max 25MB per email. Use SharePoint for large files.\n5. **Spam/Junk issues** → Check Junk folder. Right-click → Mark as Not Junk.\n\nIf none of these work, I can raise an **Email Support Ticket**.`, chips: ['Outlook keeps crashing','Cannot send emails','Email storage full'] },
+  ticket:   { text: `**I'll help you raise a support ticket right now!** 🎫\n\nPlease fill in the form below and I'll submit it to the correct team. Our AI will auto-route it based on category and priority, ensuring the fastest possible resolution.`, showForm: true, chips: [] },
+  status:   { text: `**Your Current Tickets, Rajesh:** 🎫\n\n🟡 **TKT-2025-001** — Unable to access SAP portal\n&nbsp;&nbsp;&nbsp;Status: **In Progress** | Assigned: Priya Sharma | SLA: 6h remaining\n\n✅ **TKT-2025-004** — MS Teams installation\n&nbsp;&nbsp;&nbsp;Status: **Resolved** | Resolved by: Amit Patel\n\nWould you like to add a comment or raise a new ticket?`, chips: ['Add comment to TKT-2025-001','Raise a new ticket','Track another ticket'] },
+  password: { text: `**Password Reset Guide** 🔑\n\n**Self-Service (Fastest):**\n1. Visit *pass.powergrid.in*\n2. Enter your Employee ID and registered mobile number\n3. Enter the OTP received via SMS\n4. Set your new password (min 8 chars, 1 uppercase, 1 number)\n\n**Via IT Helpdesk:**\nI can raise a password reset ticket and an engineer will assist within 2 hours.\n\n**Password Rules:**\n- Minimum 8 characters\n- At least 1 uppercase letter\n- At least 1 digit\n- Cannot reuse last 5 passwords`, chips: ['Reset SAP password','Reset email password','Raise a password ticket'] },
+  default:  { text: `**Hello Rajesh! I'm ARIA, your IT helpdesk assistant.** 👋\n\nI'm here to help with:\n- 🔐 Login & access issues\n- 🌐 Network & connectivity problems\n- 💻 Hardware & software support\n- 📧 Email & Outlook issues\n- 🎫 Raising and tracking IT tickets\n- 📚 Knowledge base self-service\n\nWhat IT issue can I help you resolve today?`, chips: ['Login issue','Network problem','Raise a ticket','Check ticket status'] }
+};
+
+function getFallback(text) {
+  const t = text.toLowerCase();
+  if (/sap|portal|login|access|account lock/i.test(t))           return FALLBACK.sap;
+  if (/network|internet|wifi|wi-fi|connection|offline/i.test(t)) return FALLBACK.network;
+  if (/laptop|computer|slow|hardware|printer|screen|freeze/i.test(t)) return FALLBACK.hardware;
+  if (/software|install|teams|office|application|app/i.test(t))  return FALLBACK.software;
+  if (/email|outlook|mail|inbox/i.test(t))                       return FALLBACK.email;
+  if (/raise ticket|new ticket|create ticket|support ticket/i.test(t)) return FALLBACK.ticket;
+  if (/ticket status|my ticket|check ticket|track/i.test(t))     return FALLBACK.status;
+  if (/password|reset.*pass|pass.*reset/i.test(t))               return FALLBACK.password;
+  if (/hi|hello|hey|good|start|help/i.test(t))                   return FALLBACK.default;
+  return { text: `I understand you need IT assistance. Let me help!\n\nCould you provide a bit more detail about:\n- **Which system or application** is affected?\n- **When did it start?**\n- **Any error messages** you're seeing?\n\nOr I can **raise a support ticket** immediately and an engineer will assist you within SLA.`, chips: ['Raise a ticket now','Search knowledge base','Login issue','Network problem'] };
+}
+
+/* ── RENDER HELPERS ──────────────────────────────── */
+function ts() {
+  return new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+}
+
+function fmt(text) {
+  // Bold, newlines, bullet-friendly
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/`(.*?)`/g, '<code>$1</code>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>')
+    .replace(/&nbsp;/g, '&nbsp;');
+}
+
+function esc(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function addUserBubble(text) {
+  const feed = document.getElementById('feed');
+  const d = document.createElement('div');
+  d.className = 'grp user';
+  d.innerHTML = `
+    <div class="grp-body">
+      <div class="bubble">${esc(text)}</div>
+      <div class="msg-time">${ts()}</div>
+    </div>
+    <div class="grp-av usr">RK</div>`;
+  feed.appendChild(d);
+  scroll();
+  updateCount();
+}
+
+function addBotBubble(text, chips = [], showForm = false) {
+  const feed = document.getElementById('feed');
+  const d = document.createElement('div');
+  d.className = 'grp bot';
+
+  let inner = `
+    <div class="grp-av bot"><i data-lucide="bot" style="width:17px;height:17px;"></i></div>
+    <div class="grp-body">
+      <div class="bubble">${fmt(text)}</div>`;
+
+  if (showForm) inner += buildForm();
+
+  if (chips.length) {
+    inner += `<div class="chips">${chips.map(c =>
+      `<button class="chip" onclick="sendQuick('${c.replace(/'/g,"\\'")}')">${c}</button>`
+    ).join('')}</div>`;
+  }
+
+  inner += `<div class="msg-time">${ts()}</div></div>`;
+  d.innerHTML = inner;
+  feed.appendChild(d);
+  lucide.createIcons();
+  scroll();
+  updateCount();
+}
+
+function buildForm() {
+  return `<div class="tkt-form" id="tktForm">
+    <h4><i data-lucide="ticket" style="width:17px;height:17px;color:var(--primary);"></i> Create Support Ticket</h4>
+    <div class="f-group">
+      <label class="f-label">Issue Title *</label>
+      <input class="f-input" id="fTitle" placeholder="Brief description of your issue">
+    </div>
+    <div class="f-row">
+      <div class="f-group" style="margin-bottom:0;">
+        <label class="f-label">Category *</label>
+        <select class="f-select" id="fCat">
+          <option>🔐 Access</option>
+          <option>💻 Hardware</option>
+          <option>📦 Software</option>
+          <option>🌐 Network</option>
+          <option>📧 Email</option>
+          <option>❓ Other</option>
+        </select>
+      </div>
+      <div class="f-group" style="margin-bottom:0;">
+        <label class="f-label">Priority *</label>
+        <select class="f-select" id="fPri">
+          <option>🟢 Low</option>
+          <option selected>🟡 Medium</option>
+          <option>🟠 High</option>
+          <option>🔴 Critical</option>
+        </select>
+      </div>
+    </div>
+    <div class="f-group" style="margin-top:.75rem;">
+      <label class="f-label">Description</label>
+      <textarea class="f-textarea" id="fDesc" placeholder="Additional details, error messages, steps to reproduce…"></textarea>
+    </div>
+    <div class="f-actions">
+      <button class="f-submit" onclick="submitTicket()">
+        <i data-lucide="send" style="width:14px;height:14px;"></i> Submit Ticket
+      </button>
+      <button class="f-cancel" onclick="document.getElementById('tktForm').remove()">Cancel</button>
+    </div>
+  </div>`;
+}
+
+function showTyping() {
+  const feed = document.getElementById('feed');
+  const d = document.createElement('div');
+  d.className = 'typing-grp'; d.id = 'typing';
+  d.innerHTML = `
+    <div class="grp-av bot"><i data-lucide="bot" style="width:17px;height:17px;"></i></div>
+    <div class="typing-bubble"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>`;
+  feed.appendChild(d);
+  lucide.createIcons();
+  scroll();
+}
+
+function hideTyping() {
+  document.getElementById('typing')?.remove();
+}
+
+/* ── SEND LOGIC ──────────────────────────────────── */
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const text  = input.value.trim();
+  if (!text || busy) return;
+
+  addUserBubble(text);
+  input.value = '';
+  autoResize(input);
+  document.getElementById('hints').style.display = 'none';
+
+  busy = true;
+  setUI(false);
+  showTyping();
+
+  try {
+    // ── Gemini AI via backend proxy ────────────────
+    const reply = await callGemini(text);
+    hideTyping();
+    addBotBubble(reply, ['Raise a ticket', 'More help', 'That solved it! ✅']);
+  } catch (err) {
+    hideTyping();
+    // Fallback to smart offline responses if API fails
+    const fb = getFallback(text);
+    addBotBubble(fb.text, fb.chips || [], fb.showForm || false);
+  } finally {
+    busy = false;
+    setUI(true);
+  }
+}
+
+function sendQuick(text) {
+  document.getElementById('chatInput').value = text;
+  sendMessage();
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+/* ── TICKET SUBMIT ───────────────────────────────── */
+function submitTicket() {
+  const title = document.getElementById('fTitle')?.value.trim();
+  if (!title) { alert('Please enter an issue title.'); return; }
+  const id  = 'TKT-2025-' + (Math.floor(Math.random() * 900) + 100);
+  const cat = document.getElementById('fCat')?.value || 'General';
+  const pri = document.getElementById('fPri')?.value || 'Medium';
+  document.getElementById('tktForm')?.remove();
+  addBotBubble(
+    `✅ **Ticket Created Successfully!**\n\n🎫 **ID:** ${id}\n📋 **Issue:** ${title}\n🗂 **Category:** ${cat}\n⚡ **Priority:** ${pri}\n👤 **Assigned to:** IT Support Team (auto-routed)\n⏱ **Expected resolution:** Within SLA\n\nYou'll receive an email confirmation at *rajesh.kumar@powergrid.in*. Is there anything else I can help you with?`,
+    ['Track this ticket', 'Raise another ticket', 'That\'s all, thanks!']
+  );
+}
+
+/* ── UTILS ───────────────────────────────────────── */
+function scroll()  { const f = document.getElementById('feed'); f.scrollTop = f.scrollHeight; }
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+function setUI(en) {
+  document.getElementById('chatInput').disabled = !en;
+  document.getElementById('sendBtn').disabled   = !en;
+}
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+function updateCount() {
+  document.getElementById('msgCount').textContent =
+    document.getElementById('feed').querySelectorAll('.grp').length;
+}
+function clearChat() {
+  document.getElementById('feed').innerHTML = '';
+  chatHistory = [];
+  updateCount();
+  document.getElementById('hints').style.display = 'flex';
+  init();
+}
+function rateSession() {
+  addBotBubble('How would you rate this session? ⭐', ['⭐⭐⭐⭐⭐ Excellent!','⭐⭐⭐⭐ Good','⭐⭐⭐ Average','Needs improvement']);
+}
+function exportChat() {
+  const msgs = [...document.getElementById('feed').querySelectorAll('.bubble')]
+    .map(b => b.closest('.grp')?.classList.contains('user') ? `You: ${b.innerText}` : `ARIA: ${b.innerText}`)
+    .join('\n\n');
+  const blob = new Blob([`POWERGRID IT Helpdesk – Chat Export\n${new Date().toLocaleString()}\n\n${msgs}`], { type: 'text/plain' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'aria-chat-export.txt'; a.click();
+}
+
+/* ── INIT ────────────────────────────────────────── */
+function init() {
+  setTimeout(() => {
+    showTyping();
+    setTimeout(() => {
+      hideTyping();
+      const mode = 'Live Gemini AI';
+      addBotBubble(
+        `Hello Rajesh! 👋 I'm **ARIA**, your POWERGRID AI helpdesk assistant — running in **${mode}** mode.\n\nI can help you with:\n- 🔐 Login & access issues\n- 🌐 Network & connectivity\n- 💻 Hardware & software support\n- 📧 Email & Outlook\n- 🎫 Raise & track IT tickets\n\nWhat's the IT issue you're facing today?`,
+        ['I have a login issue', 'Network not working', 'Raise a new ticket', 'Check my ticket status']
+      );
+    }, 1100);
+  }, 400);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  lucide.createIcons();
+  init();
+
+  // Auth check & user data
+  const userData = localStorage.getItem('user');
+  const token = localStorage.getItem('token');
+  if (!token || !userData) {
+    window.location.href = 'login.html';
+    return;
+  }
+  const user = JSON.parse(userData);
+  const avatar = document.getElementById('userAvatar');
+  if (avatar && user.name) {
+    const parts = user.name.trim().split(' ');
+    let initials = parts[0][0];
+    if (parts.length > 1) initials += parts[1][0];
+    avatar.textContent = initials.toUpperCase();
+    avatar.setAttribute('title', user.name);
+  }
+});
+</script>
+</body>
+</html>

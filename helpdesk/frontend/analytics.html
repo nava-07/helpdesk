@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - POWERGRID AI Helpdesk</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+    <style>
+        /* ─── VARIABLES ─────────────────────────────────── */
+        :root {
+            --primary:      #1e40af;
+            --primary-dark: #1e3a8a;
+            --secondary:    #0891b2;
+            --success:      #059669;
+            --danger:       #dc2626;
+            --warning:      #d97706;
+            --purple:       #7c3aed;
+            --rose:         #e11d48;
+            --teal:         #0d9488;
+            --text-dark:    #0f172a;
+            --text-medium:  #475569;
+            --text-light:   #94a3b8;
+            --border:       #e2e8f0;
+            --bg-light:     #f8fafc;
+            --bg-white:     #ffffff;
+            --shadow-sm:    0 2px 8px rgba(15,23,42,.07);
+            --shadow-md:    0 4px 16px rgba(15,23,42,.10);
+            --shadow-lg:    0 8px 32px rgba(15,23,42,.14);
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        body {
+            font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 55%, #f8fafc 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+            overflow-y: auto;
+        }
+
+        /* ─── HEADER ────────────────────────────────────── */
+        .header {
+            background: var(--bg-white);
+            border-bottom: 2px solid var(--border);
+            padding: 1rem 2rem;
+            position: sticky; top: 0; z-index: 200;
+            box-shadow: var(--shadow-sm);
+        }
+        .header-content {
+            max-width: 1500px; margin: 0 auto;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo-section { display: flex; align-items: center; gap: 1rem; }
+        .logo-icon {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px rgba(30,64,175,.3);
+        }
+        .logo-text h1 { font-size: 1.5rem; font-weight: 700; }
+        .logo-text p  { font-size: .875rem; color: var(--text-medium); }
+        .header-right { display: flex; align-items: center; gap: .75rem; }
+
+        /* ─── BUTTONS ───────────────────────────────────── */
+        .btn {
+            padding: .625rem 1.25rem; border: none; border-radius: 8px;
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: .875rem; font-weight: 600; cursor: pointer;
+            transition: all .2s; display: inline-flex; align-items: center; gap: .5rem;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; box-shadow: 0 2px 8px rgba(30,64,175,.25);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(30,64,175,.35); }
+        .btn-outline {
+            background: white; border: 1.5px solid var(--border); color: var(--text-dark);
+        }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-sm { padding: .4rem .875rem; font-size: .8125rem; }
+        .user-avatar {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, #94a3b8, #64748b);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: .8rem; cursor: pointer;
+        }
+
+        /* ─── PAGE LAYOUT ───────────────────────────────── */
+        .container { max-width: 1500px; margin: 2rem auto; padding: 0 2rem; }
+
+        .page-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
+        }
+        .page-title   { font-size: 2rem; font-weight: 700; margin-bottom: .35rem; }
+        .page-subtitle{ color: var(--text-medium); }
+
+        .date-range-group { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+        .range-btn {
+            padding: .5rem 1rem; border: 1.5px solid var(--border);
+            border-radius: 8px; background: white; cursor: pointer;
+            font-family: 'IBM Plex Sans', sans-serif; font-size: .875rem; font-weight: 600;
+            color: var(--text-medium); transition: all .2s;
+        }
+        .range-btn.active, .range-btn:hover {
+            background: var(--primary); color: white; border-color: var(--primary);
+        }
+
+        /* ─── KPI STRIP ─────────────────────────────────── */
+        .kpi-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.25rem; margin-bottom: 2rem;
+        }
+        .kpi-card {
+            background: var(--bg-white);
+            border: 1.5px solid var(--border); border-radius: 14px;
+            padding: 1.5rem; position: relative; overflow: hidden;
+            transition: all .25s;
+        }
+        .kpi-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+        .kpi-card::after {
+            content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+            height: 3px;
+        }
+        .kpi-blue::after   { background: var(--primary); }
+        .kpi-green::after  { background: var(--success); }
+        .kpi-orange::after { background: var(--warning); }
+        .kpi-purple::after { background: var(--purple); }
+        .kpi-rose::after   { background: var(--rose); }
+        .kpi-teal::after   { background: var(--teal); }
+
+        .kpi-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+        .kpi-icon {
+            width: 44px; height: 44px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .kpi-trend {
+            display: flex; align-items: center; gap: .25rem;
+            font-size: .8125rem; font-weight: 700; padding: .25rem .625rem;
+            border-radius: 20px;
+        }
+        .trend-up   { background: #d1fae5; color: var(--success); }
+        .trend-down { background: #fee2e2; color: var(--danger); }
+        .trend-flat { background: var(--bg-light); color: var(--text-medium); }
+        .kpi-value  { font-size: 2.25rem; font-weight: 700; line-height: 1; margin-bottom: .35rem; }
+        .kpi-label  { font-size: .875rem; font-weight: 600; color: var(--text-medium); margin-bottom: .25rem; }
+        .kpi-sub    { font-size: .8125rem; color: var(--text-light); }
+
+        /* ─── CHARTS GRID ───────────────────────────────── */
+        .charts-grid-2 {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 1.5rem; margin-bottom: 1.5rem;
+        }
+        .charts-grid-3 {
+            display: grid; grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5rem; margin-bottom: 1.5rem;
+        }
+        .span-2 { grid-column: span 2; }
+
+        /* ─── CHART CARD ────────────────────────────────── */
+        .chart-card {
+            background: var(--bg-white);
+            border: 1.5px solid var(--border); border-radius: 14px;
+            padding: 1.5rem; overflow: hidden;
+        }
+        .chart-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+        .chart-title {
+            font-size: 1.0625rem; font-weight: 700;
+            display: flex; align-items: center; gap: .5rem;
+        }
+        .chart-subtitle { font-size: .8125rem; color: var(--text-medium); margin-top: .2rem; }
+        .chart-body     { position: relative; }
+
+        /* ─── LEGEND ────────────────────────────────────── */
+        .legend { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.25rem; }
+        .legend-item { display: flex; align-items: center; gap: .4rem; font-size: .8125rem; font-weight: 600; }
+        .legend-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+        /* ─── TABLE ─────────────────────────────────────── */
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        thead tr { background: var(--bg-light); }
+        th {
+            padding: .875rem 1rem; text-align: left;
+            font-size: .8125rem; font-weight: 700; color: var(--text-medium);
+            text-transform: uppercase; letter-spacing: .05em; white-space: nowrap;
+        }
+        td {
+            padding: 1rem; border-bottom: 1px solid var(--border);
+            font-size: .9375rem; vertical-align: middle;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: var(--bg-light); }
+
+        /* ─── BADGE ─────────────────────────────────────── */
+        .badge {
+            display: inline-flex; align-items: center; gap: .3rem;
+            padding: .25rem .7rem; border-radius: 6px;
+            font-size: .75rem; font-weight: 600;
+        }
+        .badge-success { background: #d1fae5; color: var(--success); }
+        .badge-warning { background: #fed7aa; color: var(--warning); }
+        .badge-danger  { background: #fee2e2; color: var(--danger); }
+        .badge-info    { background: #dbeafe; color: var(--primary); }
+        .badge-purple  { background: #ede9fe; color: var(--purple); }
+
+        /* ─── MINI BAR ──────────────────────────────────── */
+        .mini-bar-wrap { display: flex; align-items: center; gap: .75rem; }
+        .mini-bar { flex: 1; height: 6px; background: var(--border); border-radius: 3px; min-width: 60px; }
+        .mini-fill { height: 100%; border-radius: 3px; }
+
+        /* ─── AI INSIGHT CARD ───────────────────────────── */
+        .insight-card {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border: 1.5px solid #93c5fd; border-radius: 14px;
+            padding: 1.5rem; margin-bottom: 1.5rem;
+        }
+        .insight-header {
+            display: flex; align-items: center; gap: .75rem;
+            margin-bottom: 1rem;
+        }
+        .insight-icon {
+            width: 44px; height: 44px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .insight-title { font-size: 1.0625rem; font-weight: 700; color: var(--primary); }
+        .insight-grid  { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 1rem; }
+        .insight-item {
+            background: white; border-radius: 10px; padding: 1rem;
+            border: 1px solid #93c5fd;
+        }
+        .insight-item-title { font-weight: 700; margin-bottom: .35rem; font-size: .9375rem; }
+        .insight-item-text  { font-size: .875rem; color: var(--text-medium); line-height: 1.5; }
+
+        /* ─── TOP PERFORMER ─────────────────────────────── */
+        .performer-list { display: flex; flex-direction: column; gap: .75rem; }
+        .performer-row  { display: flex; align-items: center; gap: 1rem; }
+        .perf-rank      { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: .875rem; color: var(--text-light); min-width: 24px; }
+        .perf-avatar    { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: .75rem; font-weight: 700; color: white; flex-shrink: 0; }
+        .perf-info      { flex: 1; }
+        .perf-name      { font-weight: 600; font-size: .9375rem; }
+        .perf-sub       { font-size: .8rem; color: var(--text-medium); }
+        .perf-score     { font-weight: 700; font-size: 1.125rem; color: var(--primary); }
+
+        /* ─── SECTION TITLE ─────────────────────────────── */
+        .section-title {
+            font-size: 1.25rem; font-weight: 700; margin-bottom: 1.25rem;
+            display: flex; align-items: center; gap: .6rem;
+        }
+
+        /* ─── RESPONSIVE ────────────────────────────────── */
+        @media (max-width: 1100px) {
+            .charts-grid-3 { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 900px) {
+            .charts-grid-2, .charts-grid-3 { grid-template-columns: 1fr; }
+            .span-2 { grid-column: span 1; }
+            .container { padding: 0 1rem; }
+            .kpi-strip { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 600px) {
+            .kpi-strip { grid-template-columns: 1fr; }
+            .page-title { font-size: 1.5rem; }
+            .header { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     HEADER
+════════════════════════════════════════════════════ -->
+<header class="header">
+    <div class="header-content">
+        <div class="logo-section">
+            <div class="logo-icon">
+                <i data-lucide="bar-chart-2" style="width:28px;height:28px;color:white;"></i>
+            </div>
+            <div class="logo-text">
+                <h1>Analytics & Reports</h1>
+                <p>POWERGRID AI Helpdesk Intelligence Dashboard</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="btn btn-outline btn-sm" onclick="exportReport()">
+                <i data-lucide="download" style="width:16px;height:16px;"></i>
+                Export PDF
+            </button>
+            <button class="btn btn-outline" onclick="window.location.href='index.html'">
+                <i data-lucide="arrow-left" style="width:18px;height:18px;"></i>
+                Dashboard
+            </button>
+            <div class="user-avatar" id="userAvatar" title="User"></div>
+        </div>
+    </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════
+     MAIN
+════════════════════════════════════════════════════ -->
+<div class="container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h2 class="page-title">System Analytics</h2>
+            <p class="page-subtitle">Comprehensive performance metrics for POWERGRID IT Helpdesk</p>
+        </div>
+        <div class="date-range-group">
+            <button class="range-btn" onclick="setRange(this,'7d')">7 Days</button>
+            <button class="range-btn active" onclick="setRange(this,'30d')">30 Days</button>
+            <button class="range-btn" onclick="setRange(this,'90d')">90 Days</button>
+            <button class="range-btn" onclick="setRange(this,'1y')">1 Year</button>
+        </div>
+    </div>
+
+    <!-- ── KPI STRIP ──────────────────────────────── -->
+    <div class="kpi-strip">
+        <div class="kpi-card kpi-blue">
+            <div class="kpi-header">
+                <div class="kpi-icon" style="background:#dbeafe;color:var(--primary);">
+                    <i data-lucide="ticket" style="width:22px;height:22px;"></i>
+                </div>
+                <span class="kpi-trend trend-up">
+                    <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +12%
+                </span>
+            </div>
+            <div class="kpi-value">1,247</div>
+            <div class="kpi-label">Total Tickets</div>
+            <div class="kpi-sub">This period</div>
+        </div>
+
+        <div class="kpi-card kpi-green">
+            <div class="kpi-header">
+                <div class="kpi-icon" style="background:#d1fae5;color:var(--success);">
+                    <i data-lucide="check-circle-2" style="width:22px;height:22px;"></i>
+                </div>
+                <span class="kpi-trend trend-up">
+                    <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +8%
+                </span>
+            </div>
+            <div class="kpi-value">94.8%</div>
+            <div class="kpi-label">SLA Compliance</div>
+            <div class="kpi-sub">Target: 95%</div>
+        </div>
+
+        <div class="kpi-card kpi-orange">
+            <div class="kpi-header">
+                <div class="kpi-icon" style="background:#fed7aa;color:var(--warning);">
+                    <i data-lucide="clock" style="width:22px;height:22px;"></i>
+                </div>
+                <span class="kpi-trend trend-down">
+                    <i data-lucide="trending-down" style="width:14px;height:14px;"></i> -15%
+                </span>
+            </div>
+            <div class="kpi-value">4.2h</div>
+            <div class="kpi-label">Avg. Resolution</div>
+            <div class="kpi-sub">Target: 6h</div>
+        </div>
+
+        <div class="kpi-card kpi-purple">
+            <div class="kpi-header">
+                <div class="kpi-icon" style="background:#ede9fe;color:var(--purple);">
+                    <i data-lucide="brain" style="width:22px;height:22px;"></i>
+                </div>
+                <span class="kpi-trend trend-up">
+                    <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +22%
+                </span>
+            </div>
+            <div class="kpi-value">38.4%</div>
+            <div class="kpi-label">AI Auto-Resolved</div>
+            <div class="kpi-sub">479 tickets</div>
+        </div>
+
+        <div class="kpi-card kpi-rose">
+            <div class="kpi-header">
+                <div class="kpi-icon" style="background:#ffe4e6;color:var(--rose);">
+                    <i data-lucide="alert-triangle" style="width:22px;height:22px;"></i>
+                </div>
+                <span class="kpi-trend trend-down">
+                    <i data-lucide="trending-down" style="width:14px;height:14px;"></i> -33%
+                </span>
+            </div>
+            <div class="kpi-value">5.2%</div>
+            <div class="kpi-label">SLA Breach Rate</div>
+            <div class="kpi-sub">65 breaches</div>
+        </div>
+
+        <div class="kpi-card kpi-teal">
+            <div class="kpi-header">
+                <div class="kpi-icon" style="background:#ccfbf1;color:var(--teal);">
+                    <i data-lucide="smile" style="width:22px;height:22px;"></i>
+                </div>
+                <span class="kpi-trend trend-up">
+                    <i data-lucide="trending-up" style="width:14px;height:14px;"></i> +5%
+                </span>
+            </div>
+            <div class="kpi-value">4.7/5</div>
+            <div class="kpi-label">User Satisfaction</div>
+            <div class="kpi-sub">892 ratings</div>
+        </div>
+    </div>
+
+    <!-- ── AI INSIGHTS ────────────────────────────── -->
+    <div class="insight-card">
+        <div class="insight-header">
+            <div class="insight-icon">
+                <i data-lucide="sparkles" style="width:24px;height:24px;color:white;"></i>
+            </div>
+            <div>
+                <div class="insight-title">AI-Powered Insights</div>
+                <div style="font-size:.875rem;color:var(--primary);margin-top:.15rem;">Automatically generated from ticket patterns this period</div>
+            </div>
+        </div>
+        <div class="insight-grid">
+            <div class="insight-item">
+                <div class="insight-item-title">🔺 Peak Hours Detected</div>
+                <div class="insight-item-text">Ticket volume spikes 68% between 10–12 AM on Mondays. Consider adding on-call staff during this window.</div>
+            </div>
+            <div class="insight-item">
+                <div class="insight-item-title">📈 Network Issues Rising</div>
+                <div class="insight-item-text">Network tickets increased by 35% this month. Building A is the hotspot — infrastructure review recommended.</div>
+            </div>
+            <div class="insight-item">
+                <div class="insight-item-title">🤖 AI Saving 40% Time</div>
+                <div class="insight-item-text">AI chatbot deflected 479 tickets that would otherwise require engineer intervention, saving ~2,000 man-hours.</div>
+            </div>
+            <div class="insight-item">
+                <div class="insight-item-title">⚠️ SLA Risk Detected</div>
+                <div class="insight-item-text">Critical tickets on Fridays have a 3× higher SLA breach rate. A dedicated on-call engineer is advised.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── ROW 1: Ticket Trend + Category Donut ──── -->
+    <div class="charts-grid-2">
+        <!-- Ticket Volume Trend -->
+        <div class="chart-card span-2" style="grid-column: 1;">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">
+                        <i data-lucide="trending-up" style="width:20px;height:20px;color:var(--primary);"></i>
+                        Ticket Volume Trend
+                    </div>
+                    <div class="chart-subtitle">Daily ticket intake vs. resolved — last 30 days</div>
+                </div>
+                <div style="display:flex;gap:.5rem;">
+                    <button class="btn btn-outline btn-sm">Weekly</button>
+                    <button class="btn btn-primary btn-sm">Daily</button>
+                </div>
+            </div>
+            <div class="chart-body">
+                <canvas id="trendChart" height="90"></canvas>
+            </div>
+            <div class="legend">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--primary);"></div> New Tickets</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--success);"></div> Resolved</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--warning);"></div> Escalated</div>
+            </div>
+        </div>
+
+        <!-- Category Donut -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">
+                        <i data-lucide="pie-chart" style="width:20px;height:20px;color:var(--primary);"></i>
+                        Tickets by Category
+                    </div>
+                    <div class="chart-subtitle">Distribution this period</div>
+                </div>
+            </div>
+            <div class="chart-body" style="max-width:280px;margin:0 auto;">
+                <canvas id="categoryChart" height="220"></canvas>
+            </div>
+            <div class="legend" style="justify-content:center;">
+                <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div> Hardware</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6;"></div> Software</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#06b6d4;"></div> Network</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#10b981;"></div> Access</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;"></div> Email</div>
+            </div>
+        </div>
+
+        <!-- Priority Chart -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">
+                        <i data-lucide="flag" style="width:20px;height:20px;color:var(--primary);"></i>
+                        Tickets by Priority
+                    </div>
+                    <div class="chart-subtitle">Monthly breakdown</div>
+                </div>
+            </div>
+            <div class="chart-body">
+                <canvas id="priorityChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── ROW 2: Resolution + Heatmap ───────────── -->
+    <div class="charts-grid-2">
+        <!-- Resolution Time by Priority -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">
+                        <i data-lucide="timer" style="width:20px;height:20px;color:var(--primary);"></i>
+                        Avg. Resolution Time
+                    </div>
+                    <div class="chart-subtitle">By priority level (hours) — vs. SLA target</div>
+                </div>
+            </div>
+            <div class="chart-body">
+                <canvas id="resolutionChart" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- SLA Compliance Monthly -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">
+                        <i data-lucide="shield-check" style="width:20px;height:20px;color:var(--primary);"></i>
+                        SLA Compliance Over Time
+                    </div>
+                    <div class="chart-subtitle">Monthly compliance rate (%)</div>
+                </div>
+            </div>
+            <div class="chart-body">
+                <canvas id="slaChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── ROW 3: AI + Satisfaction ──────────────── -->
+    <div class="charts-grid-3">
+        <!-- AI Deflection Chart -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">
+                        <i data-lucide="bot" style="width:20px;height:20px;color:var(--purple);"></i>
+                        AI Ticket Deflection
+                    </div>
+                    <div class="chart-subtitle">Human vs AI resolved</div>
+                </div>
+            </div>
+            <div class="chart-body" style="max-width:240px;margin:0 auto;">
+                <canvas id="aiChart" height="220"></canvas>
+            </div>
+            <div class="legend" style="justify-content:center;margin-top:1rem;">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--purple);"></div> AI Resolved (38.4%)</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--primary);"></div> Human Resolved</div>
+            </div>
+        </div>
+
+        <!-- User Satisfaction Score -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">
+                        <i data-lucide="smile" style="width:20px;height:20px;color:var(--teal);"></i>
+                        User Satisfaction
+                    </div>
+                    <div class="chart-subtitle">CSAT by month</div>
+                </div>
+            </div>
+            <div class="chart-body">
+                <canvas id="csatChart" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Top Performers -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">
+                        <i data-lucide="award" style="width:20px;height:20px;color:var(--warning);"></i>
+                        Top Performers
+                    </div>
+                    <div class="chart-subtitle">Most tickets resolved this month</div>
+                </div>
+            </div>
+            <div class="performer-list">
+                <div class="performer-row">
+                    <span class="perf-rank">#1</span>
+                    <div class="perf-avatar" style="background:linear-gradient(135deg,#3b82f6,#1e40af);">PS</div>
+                    <div class="perf-info">
+                        <div class="perf-name">Priya Sharma</div>
+                        <div class="perf-sub">IT Support · 4.9★</div>
+                    </div>
+                    <span class="perf-score">142</span>
+                </div>
+                <div class="performer-row">
+                    <span class="perf-rank">#2</span>
+                    <div class="perf-avatar" style="background:linear-gradient(135deg,#10b981,#059669);">RV</div>
+                    <div class="perf-info">
+                        <div class="perf-name">Ravi Verma</div>
+                        <div class="perf-sub">Network · 4.7★</div>
+                    </div>
+                    <span class="perf-score">128</span>
+                </div>
+                <div class="performer-row">
+                    <span class="perf-rank">#3</span>
+                    <div class="perf-avatar" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">AD</div>
+                    <div class="perf-info">
+                        <div class="perf-name">Anita Desai</div>
+                        <div class="perf-sub">Security · 4.8★</div>
+                    </div>
+                    <span class="perf-score">117</span>
+                </div>
+                <div class="performer-row">
+                    <span class="perf-rank">#4</span>
+                    <div class="perf-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2);">SM</div>
+                    <div class="perf-info">
+                        <div class="perf-name">Sanjay Mehta</div>
+                        <div class="perf-sub">Software · 4.6★</div>
+                    </div>
+                    <span class="perf-score">104</span>
+                </div>
+                <div class="performer-row">
+                    <span class="perf-rank">#5</span>
+                    <div class="perf-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706);">KN</div>
+                    <div class="perf-info">
+                        <div class="perf-name">Kavya Nair</div>
+                        <div class="perf-sub">Helpdesk L1 · 4.5★</div>
+                    </div>
+                    <span class="perf-score">96</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── VOLUME HEATMAP ──────────────────────────── -->
+    <div class="chart-card" style="margin-bottom:1.5rem;">
+        <div class="chart-header">
+            <div>
+                <div class="chart-title">
+                    <i data-lucide="calendar-range" style="width:20px;height:20px;color:var(--primary);"></i>
+                    Ticket Volume Heatmap
+                </div>
+                <div class="chart-subtitle">Hour × Day of week — darker = more tickets</div>
+            </div>
+        </div>
+        <div id="heatmap" style="overflow-x:auto;"></div>
+    </div>
+
+    <!-- ── DETAILED TABLE ──────────────────────────── -->
+    <div class="chart-card" style="margin-bottom:2rem;">
+        <div class="chart-header">
+            <div>
+                <div class="chart-title">
+                    <i data-lucide="table-2" style="width:20px;height:20px;color:var(--primary);"></i>
+                    Team Performance Summary
+                </div>
+                <div class="chart-subtitle">Aggregated by team — this period</div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="exportReport()">
+                <i data-lucide="download" style="width:14px;height:14px;"></i>
+                Export CSV
+            </button>
+        </div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Team</th>
+                        <th>Total Tickets</th>
+                        <th>Resolved</th>
+                        <th>Avg. Time</th>
+                        <th>SLA Compliance</th>
+                        <th>AI Deflected</th>
+                        <th>CSAT</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>IT Support Team</strong></td>
+                        <td>387</td>
+                        <td>362 <span style="color:var(--success);font-size:.8rem;">(93.5%)</span></td>
+                        <td>3.8h</td>
+                        <td>
+                            <div class="mini-bar-wrap">
+                                <div class="mini-bar"><div class="mini-fill" style="width:97%;background:var(--success);"></div></div>
+                                <span style="font-size:.8125rem;font-weight:700;">97%</span>
+                            </div>
+                        </td>
+                        <td>148</td>
+                        <td>4.8 ★</td>
+                        <td><span class="badge badge-success">Excellent</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Network Engineering</strong></td>
+                        <td>312</td>
+                        <td>280 <span style="color:var(--success);font-size:.8rem;">(89.7%)</span></td>
+                        <td>5.1h</td>
+                        <td>
+                            <div class="mini-bar-wrap">
+                                <div class="mini-bar"><div class="mini-fill" style="width:91%;background:var(--warning);"></div></div>
+                                <span style="font-size:.8125rem;font-weight:700;">91%</span>
+                            </div>
+                        </td>
+                        <td>89</td>
+                        <td>4.5 ★</td>
+                        <td><span class="badge badge-warning">Good</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Security Team</strong></td>
+                        <td>198</td>
+                        <td>190 <span style="color:var(--success);font-size:.8rem;">(96.0%)</span></td>
+                        <td>4.2h</td>
+                        <td>
+                            <div class="mini-bar-wrap">
+                                <div class="mini-bar"><div class="mini-fill" style="width:96%;background:var(--success);"></div></div>
+                                <span style="font-size:.8125rem;font-weight:700;">96%</span>
+                            </div>
+                        </td>
+                        <td>62</td>
+                        <td>4.9 ★</td>
+                        <td><span class="badge badge-success">Excellent</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Software Team</strong></td>
+                        <td>224</td>
+                        <td>198 <span style="color:var(--warning);font-size:.8rem;">(88.4%)</span></td>
+                        <td>6.7h</td>
+                        <td>
+                            <div class="mini-bar-wrap">
+                                <div class="mini-bar"><div class="mini-fill" style="width:88%;background:var(--warning);"></div></div>
+                                <span style="font-size:.8125rem;font-weight:700;">88%</span>
+                            </div>
+                        </td>
+                        <td>112</td>
+                        <td>4.3 ★</td>
+                        <td><span class="badge badge-warning">Good</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Helpdesk L1</strong></td>
+                        <td>126</td>
+                        <td>98 <span style="color:var(--danger);font-size:.8rem;">(77.8%)</span></td>
+                        <td>8.4h</td>
+                        <td>
+                            <div class="mini-bar-wrap">
+                                <div class="mini-bar"><div class="mini-fill" style="width:78%;background:var(--danger);"></div></div>
+                                <span style="font-size:.8125rem;font-weight:700;">78%</span>
+                            </div>
+                        </td>
+                        <td>68</td>
+                        <td>4.1 ★</td>
+                        <td><span class="badge badge-danger">Needs Attention</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div><!-- /container -->
+
+<!-- ═══════════════════════════════════════════════════
+     JAVASCRIPT – CHARTS + INTERACTIONS
+════════════════════════════════════════════════════ -->
+<script>
+/* ── CHART DEFAULTS ─────────────────────────────── */
+Chart.defaults.font.family = "'IBM Plex Sans', sans-serif";
+Chart.defaults.plugins.legend.display = false;
+Chart.defaults.plugins.tooltip.backgroundColor = '#0f172a';
+Chart.defaults.plugins.tooltip.padding = 12;
+Chart.defaults.plugins.tooltip.cornerRadius = 8;
+Chart.defaults.plugins.tooltip.titleFont = { size: 13, weight: '700' };
+Chart.defaults.plugins.tooltip.bodyFont  = { size: 12 };
+
+/* ── COLOUR PALETTE ─────────────────────────────── */
+const BLUE   = '#1e40af', LBLUE  = 'rgba(30,64,175,.15)';
+const GREEN  = '#059669', LGREEN = 'rgba(5,150,105,.15)';
+const ORANGE = '#d97706', LORANGE= 'rgba(217,119,6,.15)';
+const PURPLE = '#7c3aed', CYAN   = '#0891b2', ROSE = '#e11d48';
+const TEAL   = '#0d9488';
+
+/* ── 1. TREND CHART ─────────────────────────────── */
+const trendLabels = [];
+const today = new Date();
+for (let i=29;i>=0;i--) {
+    const d = new Date(today); d.setDate(today.getDate()-i);
+    trendLabels.push(d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}));
+}
+
+const seed = (i,base,amp,cycle)=> Math.round(base + amp*Math.sin(i/cycle) + (Math.random()-0.5)*amp*.6);
+const newData  = trendLabels.map((_,i)=>seed(i,42,18,7));
+const resolvedData = newData.map(v=>Math.min(v,Math.round(v*.85+Math.random()*8)));
+const escalatedData= newData.map(v=>Math.round(v*.07+Math.random()*3));
+
+new Chart(document.getElementById('trendChart'),{
+    type:'line',
+    data:{
+        labels: trendLabels,
+        datasets:[
+            {
+                label:'New Tickets',
+                data: newData,
+                borderColor: BLUE, backgroundColor: LBLUE,
+                fill:true, tension:.4, pointRadius:2, pointHoverRadius:5,
+                borderWidth:2.5
+            },
+            {
+                label:'Resolved',
+                data: resolvedData,
+                borderColor: GREEN, backgroundColor: LGREEN,
+                fill:true, tension:.4, pointRadius:2, pointHoverRadius:5,
+                borderWidth:2.5
+            },
+            {
+                label:'Escalated',
+                data: escalatedData,
+                borderColor: ORANGE, backgroundColor: LORANGE,
+                fill:true, tension:.4, pointRadius:2, pointHoverRadius:5,
+                borderWidth:2, borderDash:[4,4]
+            }
+        ]
+    },
+    options:{
+        responsive:true,
+        interaction:{ mode:'index', intersect:false },
+        scales:{
+            x:{ grid:{display:false}, ticks:{font:{size:11}, maxRotation:0, maxTicksLimit:10} },
+            y:{ grid:{color:'rgba(0,0,0,.05)'}, ticks:{font:{size:11}}, beginAtZero:true }
+        }
+    }
+});
+
+/* ── 2. CATEGORY DONUT ──────────────────────────── */
+new Chart(document.getElementById('categoryChart'),{
+    type:'doughnut',
+    data:{
+        labels:['Hardware','Software','Network','Access','Email'],
+        datasets:[{
+            data:[28,22,18,12,8],
+            backgroundColor:['#3b82f6','#8b5cf6','#06b6d4','#10b981','#f59e0b'],
+            borderWidth:0, hoverOffset:8
+        }]
+    },
+    options:{
+        cutout:'70%',
+        plugins:{ legend:{ display:false }, tooltip:{ callbacks:{
+            label: ctx => `  ${ctx.label}: ${ctx.parsed}%`
+        }}}
+    }
+});
+
+/* ── 3. PRIORITY BAR ────────────────────────────── */
+new Chart(document.getElementById('priorityChart'),{
+    type:'bar',
+    data:{
+        labels:['Jan','Feb','Mar','Apr','May','Jun'],
+        datasets:[
+            { label:'Critical', data:[12,8,15,10,6,9],  backgroundColor:'#fee2e2', borderColor:ROSE,   borderWidth:1.5, borderRadius:4 },
+            { label:'High',     data:[45,52,48,61,38,55],backgroundColor:'#fed7aa', borderColor:ORANGE, borderWidth:1.5, borderRadius:4 },
+            { label:'Medium',   data:[89,95,102,87,110,98],backgroundColor:'#dbeafe',borderColor:BLUE,  borderWidth:1.5, borderRadius:4 },
+            { label:'Low',      data:[34,29,42,38,45,31],backgroundColor:'#d1fae5', borderColor:GREEN,  borderWidth:1.5, borderRadius:4 },
+        ]
+    },
+    options:{
+        responsive:true, plugins:{ legend:{ display:true, position:'bottom', labels:{ boxWidth:12, font:{size:11}}}},
+        scales:{
+            x:{ stacked:true, grid:{display:false} },
+            y:{ stacked:true, grid:{color:'rgba(0,0,0,.05)'}, beginAtZero:true }
+        }
+    }
+});
+
+/* ── 4. RESOLUTION TIME ─────────────────────────── */
+new Chart(document.getElementById('resolutionChart'),{
+    type:'bar',
+    data:{
+        labels:['Critical','High','Medium','Low'],
+        datasets:[
+            { label:'Actual (hrs)',  data:[3.1,5.8,9.2,18.4], backgroundColor:[ROSE,ORANGE,BLUE,GREEN], borderRadius:6 },
+            { label:'SLA Target', data:[8,24,48,120], backgroundColor:'rgba(0,0,0,.06)', borderRadius:6 },
+        ]
+    },
+    options:{
+        responsive:true,
+        plugins:{ legend:{ display:true, position:'bottom', labels:{ boxWidth:12, font:{size:11}}}},
+        scales:{
+            x:{ grid:{display:false} },
+            y:{ grid:{color:'rgba(0,0,0,.05)'}, beginAtZero:true, title:{ display:true, text:'Hours', font:{size:11}}}
+        }
+    }
+});
+
+/* ── 5. SLA COMPLIANCE LINE ─────────────────────── */
+new Chart(document.getElementById('slaChart'),{
+    type:'line',
+    data:{
+        labels:['Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul'],
+        datasets:[{
+            label:'SLA %', data:[89,91,88,93,90,94,92,95,93,96,94.8,95.3],
+            borderColor:GREEN, backgroundColor:'rgba(5,150,105,.12)',
+            fill:true, tension:.4, pointRadius:4, pointBackgroundColor:GREEN, borderWidth:2.5
+        },{
+            label:'Target', data:Array(12).fill(95),
+            borderColor:ROSE, borderDash:[6,4], borderWidth:2,
+            pointRadius:0
+        }]
+    },
+    options:{
+        responsive:true,
+        plugins:{ legend:{ display:true, position:'bottom', labels:{ boxWidth:12, font:{size:11}}}},
+        scales:{
+            x:{ grid:{display:false} },
+            y:{ min:80, max:100, grid:{color:'rgba(0,0,0,.05)'}, ticks:{ callback: v=>v+'%'}}
+        }
+    }
+});
+
+/* ── 6. AI DOUGHNUT ─────────────────────────────── */
+new Chart(document.getElementById('aiChart'),{
+    type:'doughnut',
+    data:{
+        labels:['AI Resolved','Human Resolved'],
+        datasets:[{
+            data:[38.4,61.6],
+            backgroundColor:[PURPLE,BLUE],
+            borderWidth:0, hoverOffset:8
+        }]
+    },
+    options:{
+        cutout:'68%',
+        plugins:{
+            legend:{ display:false },
+            tooltip:{ callbacks:{ label: ctx=>`  ${ctx.label}: ${ctx.parsed}%` }}
+        }
+    }
+});
+
+/* ── 7. CSAT LINE ───────────────────────────────── */
+new Chart(document.getElementById('csatChart'),{
+    type:'line',
+    data:{
+        labels:['Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul'],
+        datasets:[{
+            label:'CSAT Score',
+            data:[4.1,4.2,4.0,4.3,4.2,4.4,4.3,4.5,4.5,4.6,4.7,4.7],
+            borderColor:TEAL, backgroundColor:'rgba(13,148,136,.12)',
+            fill:true, tension:.4, pointRadius:4, pointBackgroundColor:TEAL, borderWidth:2.5
+        }]
+    },
+    options:{
+        responsive:true,
+        scales:{
+            x:{ grid:{display:false} },
+            y:{ min:3.5, max:5, grid:{color:'rgba(0,0,0,.05)'}, ticks:{ callback: v=>v+'★'}}
+        }
+    }
+});
+
+/* ── 8. HEATMAP ─────────────────────────────────── */
+(function buildHeatmap(){
+    const days  = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const hours = ['6AM','7AM','8AM','9AM','10AM','11AM','12PM','1PM','2PM','3PM','4PM','5PM','6PM','7PM','8PM'];
+    // pseudo-random volume — peaks in working hours Mon-Fri
+    const data = days.map((d,di)=> hours.map((_,hi)=>{
+        const isWork = di<5 && hi>=3 && hi<=9;
+        const isPeak = di<5 && (hi===4||hi===5||hi===8);
+        let v = Math.round(Math.random()*(isWork?60:15));
+        if(isPeak) v += Math.round(Math.random()*30);
+        return v;
+    }));
+
+    const max = Math.max(...data.flat());
+    const alpha = v => (v/max);
+
+    let html = `<div style="display:grid;grid-template-columns:48px repeat(${hours.length},1fr);gap:3px;font-size:.75rem;font-family:'IBM Plex Sans',sans-serif;min-width:600px;">`;
+    // header row
+    html += `<div></div>`;
+    hours.forEach(h=> { html += `<div style="text-align:center;padding:.25rem 0;color:var(--text-light);font-weight:600;">${h}</div>`; });
+
+    data.forEach((row,di)=>{
+        html += `<div style="display:flex;align-items:center;font-weight:600;color:var(--text-medium);padding-right:.5rem;justify-content:flex-end;">${days[di]}</div>`;
+        row.forEach(v=>{
+            const a = alpha(v);
+            const bg = `rgba(30,64,175,${.07 + a*.85})`;
+            const color = a > .55 ? 'white' : 'var(--text-dark)';
+            html += `<div title="${v} tickets" style="height:32px;background:${bg};border-radius:5px;display:flex;align-items:center;justify-content:center;color:${color};font-weight:${a>.4?'700':'500'};cursor:default;transition:transform .15s;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'">${v>0?v:''}</div>`;
+        });
+    });
+    html += '</div>';
+    document.getElementById('heatmap').innerHTML = html;
+})();
+
+/* ── DATE RANGE TOGGLE ──────────────────────────── */
+function setRange(btn, range) {
+    document.querySelectorAll('.range-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+/* ── EXPORT ─────────────────────────────────────── */
+function exportReport() {
+    alert('Export functionality would generate a PDF/CSV report.\n\nIn production this calls:\nGET /api/analytics/export?format=pdf&range=30d');
+}
+
+/* ── INIT ───────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  lucide.createIcons();
+
+  // Auth check & user data
+  const userData = localStorage.getItem('user');
+  const token = localStorage.getItem('token');
+  if (!token || !userData) {
+    window.location.href = 'login.html';
+    return;
+  }
+  const user = JSON.parse(userData);
+  
+  if (user.role !== "Admin" && user.role !== "IT Engineer" && user.role !== "Support") {
+    alert("Access Denied! Admin Only.");
+    window.location.href = 'index.html';
+    return;
+  }
+  
+  const avatar = document.getElementById('userAvatar');
+  if (avatar && user.name) {
+    const parts = user.name.trim().split(' ');
+    let initials = parts[0][0];
+    if (parts.length > 1) initials += parts[1][0];
+    avatar.textContent = initials.toUpperCase();
+    avatar.setAttribute('title', user.name);
+  }
+
+  // Filter Data for Non-Admin
+  if (user.role !== "Admin") {
+    fetch("http://localhost:5000/api/teams/my-team", {
+      headers: { "Authorization": `Bearer ${token}` }
+    })
+    .then(res => res.json())
+    .then(team => {
+        if (team && team.name) {
+            const rows = document.querySelectorAll("tbody tr");
+            let foundMatch = false;
+            rows.forEach(row => {
+                const teamCell = row.querySelector("td strong").innerText.trim().toLowerCase();
+                const teamName = team.name.toLowerCase();
+                if (!teamCell.includes(teamName) && !teamName.includes(teamCell)) {
+                    row.style.display = "none";
+                } else {
+                    foundMatch = true;
+                }
+            });
+            // If the team name isn't matched against hardcoded rows, we can just reveal the first row 
+            // and replace its label to avoid an empty table.
+            if (!foundMatch && rows.length > 0) {
+                rows.forEach(row => row.style.display = "none");
+                rows[0].style.display = "";
+                rows[0].querySelector("td strong").innerText = team.name;
+            }
+            
+            const subtitle = document.querySelector(".page-subtitle");
+            if (subtitle) {
+                subtitle.textContent = `${team.name} Performance Metrics`;
+            }
+        }
+    })
+    .catch(err => console.error("Failed to load team analytics", err));
+  }
+});
+lucide.createIcons();
+</script>
+</body>
+</html>
